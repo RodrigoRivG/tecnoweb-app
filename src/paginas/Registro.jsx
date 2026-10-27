@@ -130,7 +130,7 @@ export default function Registro() {
       <h1 className="titulo-pagina">Registro de egresado</h1>
       <p className="seccion__descripcion">
         Crea tu cuenta para postular a las convocatorias de tu carrera. Todos los campos son obligatorios salvo los
-        marcados como opcionales.
+        marcados como opcionales. Si ya tienes una, <Link to="/iniciar-sesion">inicia sesión</Link>.
       </p>
 
       {mensajeGeneral && (

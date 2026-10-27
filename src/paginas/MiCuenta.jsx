@@ -11,7 +11,7 @@ export default function MiCuenta() {
   }
 
   if (!usuario) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/iniciar-sesion" replace state={{ desde: '/mi-cuenta' }} />
   }
 
   const persona = usuario.persona
@@ -26,7 +26,7 @@ export default function MiCuenta() {
       )}
 
       <h1 className="titulo-pagina">Hola, {persona?.nombres ?? usuario.correo}</h1>
-      <p className="seccion__descripcion">{nombreCompleto} · {usuario.correo}</p>
+      {nombreCompleto && <p className="seccion__descripcion">{nombreCompleto} · {usuario.correo}</p>}
 
       {persona?.egresados?.map((egresado) => (
         <section key={egresado.id} className="tarjeta perfil-academico" aria-label="Perfil académico">
