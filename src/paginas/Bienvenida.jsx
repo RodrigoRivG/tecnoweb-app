@@ -138,8 +138,10 @@ export default function Bienvenida() {
 
                 <div className="convocatoria__pie">
                   <span className="insignia">PPA mínimo {formatearPuntaje(convocatoria.ppa_minimo)}</span>
-                  {!usuario && (
+                  {!usuario ? (
                     <Link to={`/registro?carrera=${convocatoria.carrera.id}`} className="enlace-accion">Postular</Link>
+                  ) : (
+                    <Link to="/mi-cuenta" className="enlace-accion">Postular</Link>
                   )}
                 </div>
               </li>

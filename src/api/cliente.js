@@ -66,7 +66,9 @@ export async function pedir(ruta, { metodo = 'GET', cuerpo, parametros } = {}) {
     cabeceras.Authorization = `Bearer ${token}`
   }
 
-  if (cuerpo !== undefined) {
+  const esFormData = typeof FormData !== 'undefined' && cuerpo instanceof FormData
+
+  if (cuerpo !== undefined && !esFormData) {
     cabeceras['Content-Type'] = 'application/json'
   }
 
@@ -76,7 +78,7 @@ export async function pedir(ruta, { metodo = 'GET', cuerpo, parametros } = {}) {
     respuesta = await fetch(url, {
       method: metodo,
       headers: cabeceras,
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+      body: cuerpo === undefined ? undefined : (esFormData ? cuerpo : JSON.stringify(cuerpo)),
     })
   } catch {
     throw new ErrorApi(0, 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.')
@@ -99,3 +101,37 @@ export async function pedir(ruta, { metodo = 'GET', cuerpo, parametros } = {}) {
 
   return datos
 }
+
+/**
+ * Descarga un archivo protegido por token mediante stream en el navegador.
+ */
+export async function descargarArchivo(ruta, nombreArchivo = 'documento') {
+  const url = new URL(`${URL_BASE}/api/v1${ruta}`)
+  const cabeceras = {}
+  const token = leerToken()
+
+  if (token) {
+    cabeceras.Authorization = `Bearer ${token}`
+  }
+
+  let respuesta
+  try {
+    respuesta = await fetch(url, { headers: cabeceras })
+  } catch {
+    throw new ErrorApi(0, 'Error al conectar para descargar el archivo.')
+  }
+
+  if (!respuesta.ok) {
+    throw new ErrorApi(respuesta.status, 'No se pudo descargar el archivo solicitado.')
+  }
+
+  const blob = await respuesta.blob()
+  const enlace = document.createElement('a')
+  enlace.href = URL.createObjectURL(blob)
+  enlace.download = nombreArchivo
+  document.body.appendChild(enlace)
+  enlace.click()
+  enlace.remove()
+  URL.revokeObjectURL(enlace.href)
+}
+

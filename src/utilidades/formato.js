@@ -15,3 +15,18 @@ export function formatearFecha(fechaIso) {
 export function formatearPuntaje(valor) {
   return Number(valor).toLocaleString('es-BO', { maximumFractionDigits: 2 })
 }
+
+/** 1048576 → "1.0 MB", 25600 → "25.0 KB" */
+export function formatearTamano(bytes) {
+  if (!bytes && bytes !== 0) {
+    return ''
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+

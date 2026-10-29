@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import Encabezado from './componentes/Encabezado.jsx'
 import Bienvenida from './paginas/Bienvenida.jsx'
+import DetallePostulacion from './paginas/DetallePostulacion.jsx'
 import IniciarSesion from './paginas/IniciarSesion.jsx'
 import MiCuenta from './paginas/MiCuenta.jsx'
 import Carreras from './paginas/panel/Carreras.jsx'
@@ -15,7 +16,10 @@ function TemaBienvenida() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    const enClaro = ['/', '/iniciar-sesion', '/registro'].includes(pathname) || pathname.startsWith('/panel')
+    const enClaro =
+      ['/', '/iniciar-sesion', '/registro'].includes(pathname) ||
+      pathname.startsWith('/panel') ||
+      pathname.startsWith('/postulaciones')
 
     document.documentElement.classList.toggle('tema-claro', enClaro)
 
@@ -46,6 +50,7 @@ export default function App() {
             <Route path="/iniciar-sesion" element={<IniciarSesion />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
+            <Route path="/postulaciones/:id" element={<DetallePostulacion />} />
             <Route path="/panel" element={<PanelLayout />}>
               <Route index element={<Navigate to="facultades" replace />} />
               <Route path="facultades" element={<Facultades />} />
