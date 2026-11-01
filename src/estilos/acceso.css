@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Inicio de sesión
+   ========================================================================== */
+
+.acceso {
+  display: grid;
+  gap: 1.5rem;
+  align-items: center;
+  width: min(1000px, 100%);
+  margin-inline: auto;
+  padding: 2rem 16px 3rem;
+}
+
+.acceso__presentacion h1 {
+  max-width: 16ch;
+}
+
+.acceso__texto {
+  max-width: 42ch;
+  margin-top: 0.75rem;
+  color: var(--texto-suave);
+  font-size: 1.05rem;
+}
+
+.acceso__tarjeta {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.acceso__tarjeta h2 {
+  margin-bottom: 0.25rem;
+}
+
+.acceso__tarjeta .aviso {
+  margin: 0;
+}
+
+.acceso__entrar {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.acceso__pie {
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.campo-secreto {
+  position: relative;
+}
+
+.campo-secreto input {
+  padding-right: 2.75rem;
+}
+
+.campo-secreto input::-ms-reveal,
+.campo-secreto input::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.campo-secreto__ver {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.campo-secreto__ver:hover,
+.campo-secreto__ver[aria-pressed='true'] {
+  color: var(--primario);
+}
+
+@media (min-width: 800px) {
+  .acceso {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    gap: 3.5rem;
+    padding-block: 4.5rem 5rem;
+  }
+
+  .acceso__presentacion {
+    padding: 2rem 2rem 2rem 0.5rem;
+  }
+}

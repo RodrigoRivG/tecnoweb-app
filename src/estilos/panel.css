@@ -1,0 +1,135 @@
+/* ==========================================================================
+   Panel
+   ========================================================================== */
+
+.panel {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  min-height: calc(100svh - 68px);
+}
+
+.panel__lateral {
+  position: sticky;
+  top: 68px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: calc(100svh - 68px);
+  padding: 1.5rem 1rem;
+  background: var(--superficie);
+  border-right: 1px solid var(--borde);
+}
+
+.panel__lateral-titulo {
+  padding: 0 0.75rem 0.5rem;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.panel__menu {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.panel__enlace {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  color: var(--texto-suave);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.panel__enlace:hover {
+  background: var(--superficie-suave);
+  color: var(--texto);
+}
+
+.panel__enlace.active {
+  background: var(--primario-suave);
+  color: var(--primario);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--primario);
+}
+
+.panel__nota {
+  margin-top: auto;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: var(--superficie-suave);
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+
+.panel__contenido {
+  min-width: 0;
+  padding: 2rem clamp(16px, 3vw, 2.5rem) 3rem;
+}
+
+.panel__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.panel__descripcion {
+  color: var(--texto-suave);
+}
+
+.panel__buscar {
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+
+@media (max-width: 860px) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+
+  .panel__lateral {
+    position: static;
+    height: auto;
+    padding: 0.75rem 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .panel__lateral-titulo,
+  .panel__nota {
+    display: none;
+  }
+
+  .panel__menu {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .panel__enlace {
+    flex: none;
+  }
+
+  .panel__enlace.active {
+    box-shadow: inset 0 -3px 0 var(--primario);
+  }
+
+  .panel__buscar {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel__enlace {
+    transition: none;
+  }
+}

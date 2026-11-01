@@ -1,0 +1,59 @@
+/* ==========================================================================
+   Botones y enlaces
+   ========================================================================== */
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.25rem;
+  border: 1px solid var(--primario);
+  border-radius: var(--radio-chico);
+  background: var(--primario);
+  color: var(--sobre-primario);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.boton:hover {
+  background: var(--primario-hover);
+  border-color: var(--primario-hover);
+  color: var(--sobre-primario);
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boton--secundario {
+  background: var(--superficie);
+  color: var(--primario);
+  border-color: var(--borde);
+}
+
+.boton--secundario:hover {
+  background: var(--primario-suave);
+  border-color: var(--primario);
+  color: var(--primario);
+}
+
+.boton--chico {
+  min-height: 36px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.enlace-accion {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.enlace-accion::after {
+  content: ' →';
+}
