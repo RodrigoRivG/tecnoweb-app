@@ -1,0 +1,60 @@
+/* ==========================================================================
+   Variables
+   ========================================================================== */
+
+:root {
+  --fondo: #f6f7f9;
+  --superficie: #ffffff;
+  --superficie-suave: #eef1f5;
+  --texto: #1d2433;
+  --texto-suave: #5a6375;
+  --borde: #d9dee6;
+  --primario: #b91c1c;
+  --primario-hover: #991b1b;
+  --primario-suave: #fdecea;
+  --sobre-primario: #ffffff;
+  --exito: #1e7a46;
+  --exito-suave: #e3f4ea;
+  --error: #b42318;
+  --error-suave: #fdecea;
+  --destacado: #9a6700;
+  --destacado-suave: #fff4d6;
+  --foco: #dc2626;
+  --sombra: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 10%);
+
+  --radio: 10px;
+  --radio-chico: 6px;
+  --fuente: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --fuente-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  color-scheme: light;
+  font: 16px/1.5 var(--fuente);
+  color: var(--texto);
+  background: var(--fondo);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.tema-claro) {
+    --fondo: #12151c;
+    --superficie: #1a1f29;
+    --superficie-suave: #232a36;
+    --texto: #e7eaf0;
+    --texto-suave: #a3abba;
+    --borde: #313a49;
+    --primario: #f0a8a4;
+    --primario-hover: #f6c4c0;
+    --primario-suave: #3a1c1a;
+    --sobre-primario: #2a0c0c;
+    --exito: #5cc58a;
+    --exito-suave: #15301f;
+    --error: #f2877d;
+    --error-suave: #3a1c1a;
+    --destacado: #e8b84a;
+    --destacado-suave: #3a2f14;
+    --foco: #f0a8a4;
+    --sombra: 0 1px 3px rgb(0 0 0 / 40%);
+
+    color-scheme: dark;
+  }
+}

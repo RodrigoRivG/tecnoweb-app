@@ -1,0 +1,152 @@
+/* ==========================================================================
+   Formularios
+   ========================================================================== */
+
+input,
+select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--foco);
+  outline: 2px solid var(--foco);
+  outline-offset: 0;
+}
+
+select:disabled {
+  opacity: 0.6;
+}
+
+input[type='checkbox'] {
+  width: auto;
+  min-height: auto;
+}
+
+.mayusculas {
+  text-transform: uppercase;
+}
+
+.formulario {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grupo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  margin: 0;
+  padding: 1.5rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.grupo legend {
+  float: left;
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.grupo--consentimientos {
+  grid-template-columns: 1fr;
+}
+
+.campo {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+}
+
+.campo--ancho,
+.fila-ci {
+  grid-column: 1 / -1;
+}
+
+.campo__etiqueta {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.campo__opcional {
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+.campo__ayuda {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.campo__error {
+  color: var(--error);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.campo--error input,
+.campo--error select {
+  border-color: var(--error);
+}
+
+.fila-ci {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1rem;
+}
+
+.casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.casilla input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 0.15rem;
+  accent-color: var(--primario);
+}
+
+.casilla--error {
+  color: var(--error);
+}
+
+.formulario__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .grupo {
+    grid-template-columns: 1fr;
+    padding: 1.25rem 1rem;
+  }
+
+  .fila-ci {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fila-ci > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .formulario__acciones .boton {
+    flex: 1 1 auto;
+  }
+}

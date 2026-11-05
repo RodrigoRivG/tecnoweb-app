@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Componentes compartidos
+   ========================================================================== */
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.filtros__campo {
+  display: grid;
+  flex: 1 1 240px;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 360px) {
+  .rejilla {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tarjeta {
+  padding: 1.25rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.tarjeta--esqueleto {
+  height: 210px;
+  background: linear-gradient(90deg, var(--superficie) 0%, var(--superficie-suave) 50%, var(--superficie) 100%);
+  background-size: 200% 100%;
+  animation: brillo 1.4s ease-in-out infinite;
+}
+
+@keyframes brillo {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta--esqueleto {
+    animation: none;
+  }
+}
+
+.actualizando {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+
+.convocatoria {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.convocatoria__facultad {
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.convocatoria__carrera {
+  color: var(--primario);
+  font-weight: 600;
+}
+
+.convocatoria__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--borde);
+}
+
+.datos {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.datos--columnas {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 0;
+}
+
+.datos dt {
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+
+.datos dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.insignia {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--primario-suave);
+  color: var(--primario);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.insignia--top {
+  margin-left: 0.5rem;
+  background: var(--destacado-suave);
+  color: var(--destacado);
+}
+
+.insignia--exito {
+  background: var(--exito-suave);
+  color: var(--exito);
+}
+
+.insignia--error {
+  background: var(--error-suave);
+  color: var(--error);
+}
+
+.insignia--neutro {
+  background: var(--superficie-suave);
+  color: var(--texto-suave);
+}
+
+.insignia--activo {
+  background: var(--exito-suave);
+  color: var(--exito);
+}
+
+.insignia--alerta {
+  background: var(--error-suave);
+  color: var(--error);
+}
+
+.insignia--pendiente {
+  background: var(--destacado-suave);
+  color: var(--destacado);
+}
+
+.interruptor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.interruptor input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primario);
+}
+
+.tabla-envoltura {
+  overflow-x: auto;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tabla th,
+.tabla td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--borde);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tabla th {
+  background: var(--superficie-suave);
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabla .numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla__secundario {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.codigo {
+  font-family: var(--fuente-mono);
+  font-weight: 600;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.vacio {
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio);
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.vacio__titulo {
+  margin-bottom: 0.25rem;
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Avisos
+   ========================================================================== */
+
+.aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: var(--radio-chico);
+}
+
+.aviso p {
+  color: var(--texto);
+}
+
+.aviso--error {
+  background: var(--error-suave);
+  color: var(--error);
+}
+
+.aviso--exito {
+  background: var(--exito-suave);
+  color: var(--exito);
+}
