@@ -15,7 +15,7 @@ export default function DetallePostulacion() {
   const [reemplazandoTipo, setReemplazandoTipo] = useState({})
   const [aviso, setAviso] = useState(null)
 
-  const consulta = useConsulta(() => obtenerDetallePostulacion(id), [id])
+  const consulta = useConsulta(obtenerDetallePostulacion, id)
 
   if (cargandoSesion) {
     return <p className="contenedor seccion">Cargando…</p>
@@ -45,6 +45,9 @@ export default function DetallePostulacion() {
 
   const postulacion = consulta.datos
   const convocatoria = postulacion.convocatoria
+  const etapaRequisitos = postulacion.etapas?.find((e) => e.codigo === 'REQUISITOS')
+  const etapaPsicologica = postulacion.etapas?.find((e) => e.codigo === 'EVALUACION_PSICOLOGICA')
+  const requisitosAprobados = etapaRequisitos?.estado === 'APROBADA'
 
   function seleccionarArchivo(tipoDocumento, evento) {
     const archivo = evento.target.files?.[0]
@@ -131,7 +134,6 @@ export default function DetallePostulacion() {
             const esAprobada = etapa.estado === 'APROBADA'
             const esRevision = etapa.estado === 'EN_REVISION'
             const esPendiente = etapa.estado === 'PENDIENTE'
-            const esBloqueada = etapa.estado === 'BLOQUEADA'
 
             const claseModificadora = esAprobada
               ? 'etapa-tarjeta--aprobada'
@@ -172,7 +174,14 @@ export default function DetallePostulacion() {
           obligatorios solicitados en formato PDF o imagen (máximo 5 MB por archivo).
         </p>
 
-        {postulacion.requisitos_completos ? (
+        {requisitosAprobados ? (
+          <div className="aviso aviso--exito" role="status">
+            <p>
+              <strong>✓ Documentación aprobada:</strong> El equipo evaluador ha validado todos tus documentos obligatorios.
+              La Etapa 3 ha sido superada exitosamente.
+            </p>
+          </div>
+        ) : postulacion.requisitos_completos ? (
           <div className="aviso aviso--exito" role="status">
             <p>
               <strong>✓ Documentación completa:</strong> Has subido todos los documentos obligatorios requeridos.
@@ -210,7 +219,7 @@ export default function DetallePostulacion() {
                   <div>
                     {tieneDocumento ? (
                       <span className="insignia insignia--exito">
-                        ✓ {doc.estado === 'PENDIENTE' ? 'Cargado (Pendiente de revisión)' : doc.estado}
+                        ✓ {doc.estado === 'PENDIENTE' ? 'Cargado (En revisión)' : doc.estado === 'VALIDADO' ? 'Validado y Aprobado' : doc.estado}
                       </span>
                     ) : (
                       <span className="insignia insignia--alerta">Falta subir</span>
@@ -240,13 +249,15 @@ export default function DetallePostulacion() {
                       >
                         Descargar
                       </button>
-                      <button
-                        type="button"
-                        className="boton boton--secundario boton--chico"
-                        onClick={() => setReemplazandoTipo({ ...reemplazandoTipo, [req.tipo_documento]: true })}
-                      >
-                        Reemplazar archivo
-                      </button>
+                      {!requisitosAprobados && (
+                        <button
+                          type="button"
+                          className="boton boton--secundario boton--chico"
+                          onClick={() => setReemplazandoTipo({ ...reemplazandoTipo, [req.tipo_documento]: true })}
+                        >
+                          Reemplazar archivo
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -286,6 +297,29 @@ export default function DetallePostulacion() {
           })}
         </ul>
       </section>
+
+      {/* Bloque 3: Paso 4 Habilitado - Tests Psicotécnicos */}
+      {etapaPsicologica?.estado === 'PENDIENTE' && (
+        <section aria-labelledby="titulo-paso4" className="tarjeta" style={{ marginTop: '2.5rem', borderLeft: '4px solid var(--primario)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <span className="insignia insignia--exito" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>✓ Etapa Habilitada</span>
+              <h2 id="titulo-paso4" style={{ fontSize: '1.25rem', margin: '0.2rem 0' }}>Paso 4: Evaluación Psicológica</h2>
+              <p className="seccion__descripcion" style={{ margin: 0 }}>
+                Tus requisitos fueron aprobados. La siguiente etapa consiste en rendir la batería de tests psicotécnicos en línea.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="boton boton--primario"
+              onClick={() => alert('¡Excelente! La Etapa 4 ya está habilitada. Continuaremos ahora con la Tarea 2 para rendir los tests.')}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              Rendir Test Psicotécnico →
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
