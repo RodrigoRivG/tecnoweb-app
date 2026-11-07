@@ -201,6 +201,18 @@ a:hover {
   color: var(--primario);
 }
 
+.boton--peligro {
+  background: var(--superficie);
+  color: var(--error);
+  border-color: var(--borde);
+}
+
+.boton--peligro:hover {
+  background: var(--error-suave);
+  border-color: var(--error);
+  color: var(--error);
+}
+
 .boton--chico {
   min-height: 36px;
   padding: 0.35rem 0.9rem;
@@ -1197,10 +1209,9 @@ input[type='checkbox'] {
 }
 
 .panel__enlace.active {
-  background: var(--primario-suave);
-  color: var(--primario);
+  background: var(--superficie-suave);
+  color: var(--texto);
   font-weight: 600;
-  box-shadow: inset 3px 0 0 var(--primario);
 }
 
 .panel__nota {
@@ -1235,6 +1246,24 @@ input[type='checkbox'] {
   max-width: 320px;
 }
 
+.panel__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.panel__formulario {
+  margin-bottom: 1.5rem;
+}
+
+.tabla__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
 @media (max-width: 860px) {
   .panel {
     grid-template-columns: 1fr;
@@ -1261,10 +1290,6 @@ input[type='checkbox'] {
 
   .panel__enlace {
     flex: none;
-  }
-
-  .panel__enlace.active {
-    box-shadow: inset 0 -3px 0 var(--primario);
   }
 
   .panel__buscar {

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { iniciarSesionEnApi } from '../api/auth.js'
 import Campo from '../componentes/Campo.jsx'
@@ -6,26 +7,6 @@ import { useSesion } from '../sesion/SesionContext.jsx'
 import { esAdmin, inicioDe } from '../utilidades/roles.js'
 
 const VACIO = { correo: '', password: '' }
-
-function IconoOjo({ tachado }) {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      {tachado ? (
-        <>
-          <path d="M3 3l18 18" />
-          <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83" />
-          <path d="M9.88 5.09A10.9 10.9 0 0 1 12 4.5c5.25 0 9.27 3.94 10.5 7.5a11.6 11.6 0 0 1-2.12 3.38" />
-          <path d="M6.11 6.11A11.8 11.8 0 0 0 1.5 12c1.23 3.56 5.25 7.5 10.5 7.5 1.61 0 3.13-.36 4.5-1" />
-        </>
-      ) : (
-        <>
-          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-          <circle cx="12" cy="12" r="3" />
-        </>
-      )}
-    </svg>
-  )
-}
 
 /** Vuelve a la página pedida si es interna y el rol puede verla; si no, a la de inicio del rol. */
 function destinoPara(usuario, ruta) {
@@ -149,7 +130,7 @@ export default function IniciarSesion() {
                 aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 onClick={() => setVerPassword((visible) => !visible)}
               >
-                <IconoOjo tachado={verPassword} />
+                {verPassword ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
               </button>
             </div>
           )}
