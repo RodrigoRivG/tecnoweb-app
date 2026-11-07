@@ -61,6 +61,13 @@
   font-size: 0.9rem;
 }
 
+.boton--icono {
+  min-height: 34px;
+  width: 34px;
+  padding: 0;
+  border-radius: var(--radio-chico);
+}
+
 .enlace-accion {
   font-weight: 600;
   text-decoration: none;
