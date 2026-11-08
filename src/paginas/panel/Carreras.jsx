@@ -188,26 +188,28 @@ export default function Carreras() {
               {carrera.activa ? 'Activa' : 'Inactiva'}
             </span>
           </td>
-          <td className="tabla__acciones">
-            <button
-              type="button"
-              className="boton boton--secundario boton--icono"
-              title="Editar carrera"
-              aria-label="Editar carrera"
-              onClick={() => abrirEditar(carrera)}
-            >
-              <Pencil size={16} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="boton boton--peligro boton--icono"
-              title="Eliminar carrera"
-              aria-label="Eliminar carrera"
-              disabled={eliminandoId === carrera.id}
-              onClick={() => manejarEliminar(carrera)}
-            >
-              <Trash2 size={16} aria-hidden="true" />
-            </button>
+          <td className="numero">
+            <div className="tabla__acciones">
+              <button
+                type="button"
+                className="boton boton--secundario boton--icono"
+                title="Editar carrera"
+                aria-label="Editar carrera"
+                onClick={() => abrirEditar(carrera)}
+              >
+                <Pencil size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="boton boton--peligro boton--icono"
+                title="Eliminar carrera"
+                aria-label="Eliminar carrera"
+                disabled={eliminandoId === carrera.id}
+                onClick={() => manejarEliminar(carrera)}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
+            </div>
           </td>
         </tr>
       )}

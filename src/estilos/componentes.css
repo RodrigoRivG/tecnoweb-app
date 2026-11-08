@@ -186,6 +186,7 @@
 
 .tabla-envoltura {
   overflow-x: auto;
+  max-width: 100%;
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
@@ -193,6 +194,7 @@
 
 .tabla {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   font-size: 0.95rem;
 }
@@ -202,7 +204,7 @@
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--borde);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .tabla th {

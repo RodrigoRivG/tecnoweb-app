@@ -161,26 +161,28 @@ export default function Facultades() {
               {facultad.activa ? 'Activa' : 'Inactiva'}
             </span>
           </td>
-          <td className="tabla__acciones">
-            <button
-              type="button"
-              className="boton boton--secundario boton--icono"
-              title="Editar facultad"
-              aria-label="Editar facultad"
-              onClick={() => abrirEditar(facultad)}
-            >
-              <Pencil size={16} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="boton boton--peligro boton--icono"
-              title="Eliminar facultad"
-              aria-label="Eliminar facultad"
-              disabled={eliminandoId === facultad.id}
-              onClick={() => manejarEliminar(facultad)}
-            >
-              <Trash2 size={16} aria-hidden="true" />
-            </button>
+          <td className="numero">
+            <div className="tabla__acciones">
+              <button
+                type="button"
+                className="boton boton--secundario boton--icono"
+                title="Editar facultad"
+                aria-label="Editar facultad"
+                onClick={() => abrirEditar(facultad)}
+              >
+                <Pencil size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="boton boton--peligro boton--icono"
+                title="Eliminar facultad"
+                aria-label="Eliminar facultad"
+                disabled={eliminandoId === facultad.id}
+                onClick={() => manejarEliminar(facultad)}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
+            </div>
           </td>
         </tr>
       )}
