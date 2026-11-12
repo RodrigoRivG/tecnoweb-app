@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { iniciarSesionEnApi } from '../api/auth.js'
 import Campo from '../componentes/Campo.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
-import { esAdmin, inicioDe } from '../utilidades/roles.js'
+import { esEvaluador, inicioDe } from '../utilidades/roles.js'
 
 const VACIO = { correo: '', password: '' }
 
@@ -31,7 +31,7 @@ function IconoOjo({ tachado }) {
 function destinoPara(usuario, ruta) {
   const interna = typeof ruta === 'string' && ruta.startsWith('/') && !ruta.startsWith('//')
 
-  if (!interna || (ruta.startsWith('/panel') && !esAdmin(usuario))) {
+  if (!interna || (ruta.startsWith('/panel') && !esEvaluador(usuario))) {
     return inicioDe(usuario)
   }
 

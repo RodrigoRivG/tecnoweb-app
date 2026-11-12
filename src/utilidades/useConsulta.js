@@ -24,5 +24,5 @@ export function useConsulta(consultar, parametros) {
   const cargando = resultado.clave !== clave
   const reintentar = useCallback(() => setIntento((n) => n + 1), [])
 
-  return { datos: resultado.datos, error: cargando ? null : resultado.error, cargando, reintentar }
+  return { datos: resultado.datos, error: cargando ? null : resultado.error, cargando, reintentar, refrescar: reintentar }
 }

@@ -5,9 +5,11 @@ import Bienvenida from './paginas/Bienvenida.jsx'
 import DetallePostulacion from './paginas/DetallePostulacion.jsx'
 import IniciarSesion from './paginas/IniciarSesion.jsx'
 import MiCuenta from './paginas/MiCuenta.jsx'
+import RendirTest from './paginas/RendirTest.jsx'
 import Carreras from './paginas/panel/Carreras.jsx'
 import Facultades from './paginas/panel/Facultades.jsx'
 import PanelLayout from './paginas/panel/PanelLayout.jsx'
+import Postulaciones from './paginas/panel/Postulaciones.jsx'
 import Usuarios from './paginas/panel/Usuarios.jsx'
 import Registro from './paginas/Registro.jsx'
 import { SesionProvider } from './sesion/SesionContext.jsx'
@@ -51,10 +53,13 @@ export default function App() {
             <Route path="/registro" element={<Registro />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
             <Route path="/postulaciones/:id" element={<DetallePostulacion />} />
+            <Route path="/postulaciones/:id/test" element={<RendirTest />} />
             <Route path="/panel" element={<PanelLayout />}>
               <Route index element={<Navigate to="facultades" replace />} />
               <Route path="facultades" element={<Facultades />} />
               <Route path="carreras" element={<Carreras />} />
+              <Route path="postulaciones" element={<Postulaciones />} />
+              <Route path="postulaciones/:id" element={<DetallePostulacion />} />
               <Route path="usuarios" element={<Usuarios />} />
             </Route>
             <Route path="*" element={<NoEncontrada />} />

@@ -4,7 +4,7 @@ import { obtenerConvocatorias, obtenerFacultades, obtenerPerfiles } from '../api
 import { ErrorCarga, Esqueleto, Vacio } from '../componentes/Estado.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { formatearFecha, formatearPuntaje } from '../utilidades/formato.js'
-import { esAdmin, inicioDe } from '../utilidades/roles.js'
+import { esEvaluador, inicioDe } from '../utilidades/roles.js'
 import { useConsulta } from '../utilidades/useConsulta.js'
 
 const PASOS = [
@@ -53,7 +53,7 @@ export default function Bienvenida() {
           </p>
           <div className="portada__acciones">
             {usuario ? (
-              <Link to={inicioDe(usuario)} className="boton">{esAdmin(usuario) ? 'Ir al panel' : 'Ir a mi cuenta'}</Link>
+              <Link to={inicioDe(usuario)} className="boton">{esEvaluador(usuario) ? 'Ir al panel' : 'Ir a mi cuenta'}</Link>
             ) : (
               <>
                 <Link to="/registro" className="boton">Registrarme como egresado</Link>

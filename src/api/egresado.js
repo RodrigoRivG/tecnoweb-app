@@ -31,7 +31,7 @@ export async function obtenerMisPostulaciones() {
  * Detalle de una postulación con sus etapas y requisitos documentales.
  */
 export async function obtenerDetallePostulacion(postulacionId) {
-  return (await pedir(`/egresado/postulaciones/${postulacionId}`)).data
+  return (await pedir(`/postulaciones/${postulacionId}`)).data
 }
 
 /**
@@ -57,7 +57,61 @@ export async function subirDocumentoPostulacion(postulacionId, tipoDocumento, ar
  * @param {string} nombreArchivo
  */
 export async function descargarDocumentoPostulacion(documentoId, nombreArchivo) {
-  return descargarArchivo(`/egresado/documentos/${documentoId}/archivo`, nombreArchivo)
+  return descargarArchivo(`/documentos/${documentoId}/archivo`, nombreArchivo)
 }
+
+/**
+ * Obtiene la evaluación activa de la postulación (si existe).
+ * Permite filtrar por una prueba específica dentro de la etapa mediante procesoPruebaId.
+ */
+export async function obtenerEvaluacionActiva(postulacionId, procesoPruebaId = null) {
+  const query = procesoPruebaId ? `?proceso_prueba_id=${procesoPruebaId}` : ''
+  return (await pedir(`/egresado/postulaciones/${postulacionId}/evaluacion-activa${query}`)).data
+}
+
+/**
+ * Inicia el intento de evaluación para la postulación.
+ */
+export async function iniciarEvaluacion(postulacionId, procesoPruebaId = null) {
+  return (await pedir(`/egresado/postulaciones/${postulacionId}/iniciar-evaluacion`, {
+    metodo: 'POST',
+    cuerpo: procesoPruebaId ? { proceso_prueba_id: procesoPruebaId } : {},
+  })).data
+}
+
+/**
+ * Obtiene las preguntas del intento en curso.
+ */
+export async function obtenerPreguntasIntento(intentoId) {
+  return (await pedir(`/egresado/intentos/${intentoId}/preguntas`)).data
+}
+
+/**
+ * Registra o actualiza la respuesta a una pregunta del intento.
+ */
+export async function responderPregunta(intentoId, preguntaId, opcionId) {
+  return (await pedir(`/egresado/intentos/${intentoId}/responder`, {
+    metodo: 'POST',
+    cuerpo: { pregunta_id: preguntaId, opcion_id: opcionId },
+  }))
+}
+
+/**
+ * Finaliza el intento y califica la evaluación.
+ */
+export async function finalizarEvaluacion(intentoId) {
+  return (await pedir(`/egresado/intentos/${intentoId}/finalizar`, {
+    metodo: 'POST',
+  })).data
+}
+
+/**
+ * Obtiene el resultado final, posición de ranking y distinción de adjudicación.
+ */
+export async function obtenerResultadoFinal(postulacionId) {
+  return (await pedir(`/postulaciones/${postulacionId}/resultado-final`)).data
+}
+
+
 
 
