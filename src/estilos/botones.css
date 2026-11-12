@@ -43,10 +43,29 @@
   color: var(--primario);
 }
 
+.boton--peligro {
+  background: var(--superficie);
+  color: var(--error);
+  border-color: var(--borde);
+}
+
+.boton--peligro:hover {
+  background: var(--error-suave);
+  border-color: var(--error);
+  color: var(--error);
+}
+
 .boton--chico {
   min-height: 36px;
   padding: 0.35rem 0.9rem;
   font-size: 0.9rem;
+}
+
+.boton--icono {
+  min-height: 34px;
+  width: 34px;
+  padding: 0;
+  border-radius: var(--radio-chico);
 }
 
 .enlace-accion {
