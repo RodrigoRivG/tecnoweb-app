@@ -75,3 +75,29 @@ export async function eliminarConvocatoriaAdmin(id) {
   return (await pedir(`/admin/convocatorias/${id}`, { metodo: 'DELETE' }))
 }
 
+// Banco de Preguntas y Pruebas Psicotécnicas
+export async function obtenerCatalogoPruebasAdmin() {
+  return (await pedir('/admin/banco-preguntas/catalogo')).data
+}
+
+export async function obtenerPreguntasAdmin(filtros) {
+  return (await pedir('/admin/preguntas', { parametros: filtros })).data
+}
+
+export async function obtenerPreguntaAdmin(id) {
+  return (await pedir(`/admin/preguntas/${id}`)).data
+}
+
+export async function crearPreguntaAdmin(datos) {
+  return (await pedir('/admin/preguntas', { metodo: 'POST', cuerpo: datos }))
+}
+
+export async function actualizarPreguntaAdmin(id, datos) {
+  return (await pedir(`/admin/preguntas/${id}`, { metodo: 'PUT', cuerpo: datos }))
+}
+
+export async function eliminarPreguntaAdmin(id) {
+  return (await pedir(`/admin/preguntas/${id}`, { metodo: 'DELETE' }))
+}
+
+
