@@ -1,4 +1,4 @@
-import { Building2, FileText, GraduationCap, Shield, Users } from 'lucide-react'
+import { Briefcase, Building2, FileText, GraduationCap, Shield, Users } from 'lucide-react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { useSesion } from '../../sesion/SesionContext.jsx'
 import { esEvaluador } from '../../utilidades/roles.js'
@@ -13,6 +13,11 @@ const SECCIONES = [
     ruta: '/panel/carreras',
     titulo: 'Carreras',
     icono: <GraduationCap size={20} aria-hidden="true" />,
+  },
+  {
+    ruta: '/panel/convocatorias',
+    titulo: 'Convocatorias',
+    icono: <Briefcase size={20} aria-hidden="true" />,
   },
   {
     ruta: '/panel/postulaciones',

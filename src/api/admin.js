@@ -55,3 +55,23 @@ export async function actualizarPermisosRolAdmin(rolId, permisosIds) {
   })).data
 }
 
+export async function obtenerConvocatoriasAdmin(filtros) {
+  return (await pedir('/admin/convocatorias', { parametros: filtros })).data
+}
+
+export async function obtenerConvocatoriaAdmin(id) {
+  return (await pedir(`/admin/convocatorias/${id}`)).data
+}
+
+export async function crearConvocatoriaAdmin(datos) {
+  return (await pedir('/admin/convocatorias', { metodo: 'POST', cuerpo: datos })).data
+}
+
+export async function actualizarConvocatoriaAdmin(id, datos) {
+  return (await pedir(`/admin/convocatorias/${id}`, { metodo: 'PUT', cuerpo: datos })).data
+}
+
+export async function eliminarConvocatoriaAdmin(id) {
+  return (await pedir(`/admin/convocatorias/${id}`, { metodo: 'DELETE' }))
+}
+
