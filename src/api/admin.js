@@ -81,7 +81,16 @@ export async function obtenerCatalogoPruebasAdmin() {
 }
 
 export async function obtenerPreguntasAdmin(filtros) {
-  return (await pedir('/admin/preguntas', { parametros: filtros })).data
+  return await pedir('/admin/preguntas', { parametros: filtros })
+}
+
+export async function subirImagenPreguntaAdmin(archivo) {
+  const formData = new FormData()
+  formData.append('imagen', archivo)
+  return (await pedir('/admin/preguntas/imagen', {
+    metodo: 'POST',
+    cuerpo: formData,
+  })).data
 }
 
 export async function obtenerPreguntaAdmin(id) {

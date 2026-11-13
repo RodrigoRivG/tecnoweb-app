@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Edit3,
-  FileCheck,
-  FileQuestion,
-  Filter,
-  Layers,
+  Image as ImageIcon,
   Plus,
   RefreshCw,
   Search,
   Sparkles,
   Trash2,
+  UploadCloud,
   X,
 } from 'lucide-react'
 import {
@@ -20,16 +20,17 @@ import {
   eliminarPreguntaAdmin,
   obtenerCatalogoPruebasAdmin,
   obtenerPreguntasAdmin,
+  subirImagenPreguntaAdmin,
 } from '../../api/admin.js'
 import Campo from '../../componentes/Campo.jsx'
 import { ErrorCarga, Esqueleto } from '../../componentes/Estado.jsx'
 
-// Plantillas preconfiguradas para creación ultra-rápida de opciones
+// Plantillas preconfiguradas para creación ágil de opciones
 const PLANTILLAS = {
   likert5: {
     nombre: 'Escala Likert (1 a 5)',
     icono: '⭐',
-    descripcion: 'Inteligencia Emocional y Habilidades Blandas',
+    descripcion: 'Para Inteligencia Emocional y Habilidades Blandas',
     opciones: [
       { etiqueta: '1', texto: 'Totalmente en desacuerdo', puntaje: '1' },
       { etiqueta: '2', texto: 'En desacuerdo', puntaje: '2' },
@@ -76,13 +77,14 @@ const FORMULARIO_INICIAL = {
   dimension_id: '',
   orden: '',
   enunciado: '',
+  imagen_archivo_id: null,
+  imagen_url: null,
   opciones: [
     { etiqueta: 'A', texto: '', puntaje: '1' },
     { etiqueta: 'B', texto: '', puntaje: '0' },
   ],
 }
 
-// Devuelve la siguiente etiqueta secuencial sugerida (A -> B -> C... o 1 -> 2 -> 3...)
 function sugerirSiguienteEtiqueta(opciones) {
   if (!opciones || opciones.length === 0) return 'A'
   const ult = opciones[opciones.length - 1]?.etiqueta?.trim()?.toUpperCase() || ''
@@ -99,93 +101,132 @@ function sugerirSiguienteEtiqueta(opciones) {
 export default function Preguntas() {
   const [catalogo, setCatalogo] = useState({ pruebas: [], dimensiones: [], resumen: {} })
   const [preguntas, setPreguntas] = useState([])
-  const [cargando, setCargando] = useState(true)
+  const [metaPaginacion, setMetaPaginacion] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+    from: 0,
+    to: 0,
+  })
+
+  const [cargandoInicial, setCargandoInicial] = useState(true)
   const [cargandoPreguntas, setCargandoPreguntas] = useState(false)
   const [error, setError] = useState(null)
   const [aviso, setAviso] = useState(null)
 
-  // Filtros
-  const [filtroPrueba, setFiltroPrueba] = useState('')
-  const [filtroDimension, setFiltroDimension] = useState('')
+  // Prueba activa (al entrar, se selecciona exclusivamente esta prueba)
+  const [pruebaActivaId, setPruebaActivaId] = useState(null)
   const [busqueda, setBusqueda] = useState('')
+  const [paginaActual, setPaginaActual] = useState(1)
+  const [porPagina, setPorPagina] = useState(10)
 
   // Estado del modal (crear / editar)
   const [mostrarModal, setMostrarModal] = useState(false)
-  const [modoModal, setModoModal] = useState('crear') // 'crear' | 'editar'
+  const [modoModal, setModoModal] = useState('crear')
   const [form, setForm] = useState(FORMULARIO_INICIAL)
   const [erroresForm, setErroresForm] = useState({})
   const [guardando, setGuardando] = useState(false)
+  const [subiendoImagen, setSubiendoImagen] = useState(false)
   const [eliminandoId, setEliminandoId] = useState(null)
 
-  // Carga inicial del catálogo y preguntas
+  // Carga inicial: Catálogo y selección de la primera prueba
   useEffect(() => {
     async function inicializar() {
-      setCargando(true)
+      setCargandoInicial(true)
       setError(null)
       try {
         const cat = await obtenerCatalogoPruebasAdmin()
         setCatalogo(cat)
 
-        // Si hay pruebas, preseleccionar la primera o listar todas
-        const datosPreguntas = await obtenerPreguntasAdmin({})
-        setPreguntas(datosPreguntas)
+        // Seleccionar por defecto la primera prueba nuclear (ej. TEST_PERSONALIDAD)
+        const primerPrueba = cat.pruebas?.[0]
+        if (primerPrueba) {
+          setPruebaActivaId(primerPrueba.id)
+          const res = await obtenerPreguntasAdmin({
+            prueba_id: primerPrueba.id,
+            page: 1,
+            per_page: 10,
+          })
+          setPreguntas(res.data || [])
+          if (res.meta) setMetaPaginacion(res.meta)
+        }
       } catch (err) {
-        setError(err.message || 'Error al cargar el banco de preguntas.')
+        setError(err.message || 'Error al conectar con el servidor.')
       } finally {
-        setCargando(false)
+        setCargandoInicial(false)
       }
     }
     inicializar()
   }, [])
 
-  // Recargar preguntas cuando cambien los filtros principales
-  async function recargarPreguntas(filtrosPersonalizados = {}) {
+  // Cargar preguntas cuando cambie la prueba activa, página, cantidad por página o búsqueda
+  async function cargarPreguntas(pId, pag = 1, cant = porPagina, query = busqueda) {
+    if (!pId) return
     setCargandoPreguntas(true)
     try {
-      const pId = filtrosPersonalizados.prueba_id !== undefined ? filtrosPersonalizados.prueba_id : filtroPrueba
-      const dId = filtrosPersonalizados.dimension_id !== undefined ? filtrosPersonalizados.dimension_id : filtroDimension
-      const q = filtrosPersonalizados.q !== undefined ? filtrosPersonalizados.q : busqueda
+      const params = {
+        prueba_id: pId,
+        page: pag,
+        per_page: cant,
+      }
+      if (query.trim()) params.q = query.trim()
 
-      const params = {}
-      if (pId) params.prueba_id = pId
-      if (dId) params.dimension_id = dId
-      if (q) params.q = q
+      const res = await obtenerPreguntasAdmin(params)
+      setPreguntas(res.data || [])
+      if (res.meta) setMetaPaginacion(res.meta)
 
-      const datos = await obtenerPreguntasAdmin(params)
-      setPreguntas(datos)
-
-      // Actualizar conteos del catálogo en segundo plano
+      // Actualizar contadores del catálogo en segundo plano
       const cat = await obtenerCatalogoPruebasAdmin()
       setCatalogo(cat)
     } catch (err) {
-      setAviso({ tipo: 'error', mensaje: err.message || 'Error al filtrar preguntas.' })
+      setAviso({ tipo: 'error', mensaje: err.message || 'Error al cargar las preguntas.' })
     } finally {
       setCargandoPreguntas(false)
     }
   }
 
-  // Filtrado local instantáneo por búsqueda si ya están cargadas
-  const preguntasFiltradas = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    return preguntas.filter((p) => {
-      if (filtroPrueba && String(p.prueba_id) !== String(filtroPrueba)) return false
-      if (filtroDimension && String(p.dimension_id) !== String(filtroDimension)) return false
-      if (!q) return true
-      const coincideEnunciado = p.enunciado?.toLowerCase().includes(q)
-      const coincideOpcion = p.opciones?.some((o) => o.texto?.toLowerCase().includes(q) || o.etiqueta?.toLowerCase().includes(q))
-      return coincideEnunciado || coincideOpcion
+  // Cambio de prueba activa
+  function cambiarPrueba(idPrueba) {
+    setPruebaActivaId(idPrueba)
+    setPaginaActual(1)
+    setBusqueda('')
+    cargarPreguntas(idPrueba, 1, porPagina, '')
+  }
+
+  // Cambio de página
+  function cambiarPagina(nuevaPagina) {
+    if (nuevaPagina < 1 || nuevaPagina > metaPaginacion.last_page) return
+    setPaginaActual(nuevaPagina)
+    cargarPreguntas(pruebaActivaId, nuevaPagina, porPagina, busqueda)
+    window.scrollTo({ top: 120, behavior: 'smooth' })
+  }
+
+  // Separar las 4 pruebas principales de las pruebas secundarias
+  const { pruebasPrincipales, otrasPruebas } = useMemo(() => {
+    const principales = []
+    const otras = []
+    catalogo.pruebas.forEach((p) => {
+      if (p.es_nuclear) {
+        principales.push(p)
+      } else {
+        otras.push(p)
+      }
     })
-  }, [preguntas, filtroPrueba, filtroDimension, busqueda])
+    return { pruebasPrincipales: principales, otrasPruebas: otras }
+  }, [catalogo.pruebas])
+
+  const pruebaSeleccionada = useMemo(() => {
+    return catalogo.pruebas.find((p) => p.id === pruebaActivaId) || null
+  }, [catalogo.pruebas, pruebaActivaId])
 
   // Abrir modal de creación
-  function abrirCrear(pruebaIdPorDefecto = '') {
-    const pId = pruebaIdPorDefecto || filtroPrueba || (catalogo.pruebas[0]?.id?.toString() || '')
+  function abrirCrear() {
     setModoModal('crear')
     setErroresForm({})
     setForm({
       ...FORMULARIO_INICIAL,
-      prueba_id: pId,
-      dimension_id: filtroDimension || '',
+      prueba_id: pruebaActivaId ? String(pruebaActivaId) : (catalogo.pruebas[0]?.id?.toString() || ''),
       opciones: [
         { etiqueta: 'A', texto: '', puntaje: '1' },
         { etiqueta: 'B', texto: '', puntaje: '0' },
@@ -200,10 +241,12 @@ export default function Preguntas() {
     setErroresForm({})
     setForm({
       id: pregunta.id,
-      prueba_id: pregunta.prueba_id?.toString() || '',
-      dimension_id: pregunta.dimension_id?.toString() || '',
-      orden: pregunta.orden?.toString() || '',
+      prueba_id: String(pregunta.prueba_id),
+      dimension_id: pregunta.dimension_id ? String(pregunta.dimension_id) : '',
+      orden: pregunta.orden ? String(pregunta.orden) : '',
       enunciado: pregunta.enunciado || '',
+      imagen_archivo_id: pregunta.imagen_archivo_id || null,
+      imagen_url: pregunta.imagen_url || null,
       opciones: pregunta.opciones.map((o) => ({
         id: o.id,
         etiqueta: o.etiqueta,
@@ -215,16 +258,18 @@ export default function Preguntas() {
     setMostrarModal(true)
   }
 
-  // Duplicar pregunta existente como base de una nueva
+  // Duplicar pregunta
   function duplicarPregunta(pregunta) {
     setModoModal('crear')
     setErroresForm({})
     setForm({
       id: null,
-      prueba_id: pregunta.prueba_id?.toString() || '',
-      dimension_id: pregunta.dimension_id?.toString() || '',
-      orden: '', // Dejar vacío para asignación automática al final
-      enunciado: `${pregunta.enunciado} (Copia)`,
+      prueba_id: String(pregunta.prueba_id),
+      dimension_id: pregunta.dimension_id ? String(pregunta.dimension_id) : '',
+      orden: '',
+      enunciado: pregunta.enunciado ? `${pregunta.enunciado} (Copia)` : '',
+      imagen_archivo_id: pregunta.imagen_archivo_id || null,
+      imagen_url: pregunta.imagen_url || null,
       opciones: pregunta.opciones.map((o) => ({
         etiqueta: o.etiqueta,
         texto: o.texto,
@@ -234,8 +279,40 @@ export default function Preguntas() {
     setMostrarModal(true)
     setAviso({
       tipo: 'exito',
-      mensaje: `Pregunta clonada en el formulario. Puedes editar el enunciado o las opciones y guardar.`,
+      mensaje: `Pregunta duplicada en el formulario. Puedes editar el enunciado o la imagen y guardarla.`,
     })
+  }
+
+  // Subir imagen para la pregunta
+  async function manejarSubirImagen(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setSubiendoImagen(true)
+    setErroresForm((prev) => ({ ...prev, imagen: undefined }))
+    try {
+      const archivoCreado = await subirImagenPreguntaAdmin(file)
+      setForm((prev) => ({
+        ...prev,
+        imagen_archivo_id: archivoCreado.id,
+        imagen_url: archivoCreado.url,
+      }))
+    } catch (err) {
+      setErroresForm((prev) => ({ ...prev, imagen: [err.message || 'Error al subir la imagen.'] }))
+    } finally {
+      setSubiendoImagen(false)
+      // Limpiar input para permitir seleccionar la misma imagen si se desea
+      e.target.value = ''
+    }
+  }
+
+  // Quitar imagen
+  function quitarImagen() {
+    setForm((prev) => ({
+      ...prev,
+      imagen_archivo_id: null,
+      imagen_url: null,
+    }))
   }
 
   // Aplicar plantilla rápida de opciones
@@ -248,7 +325,7 @@ export default function Preguntas() {
     }))
   }
 
-  // Marcar una opción como única correcta (asigna 1 pto y 0 a las demás)
+  // Marcar una opción como única correcta
   function marcarComoUnicaCorrecta(indexSeleccionado) {
     setForm((prev) => ({
       ...prev,
@@ -259,7 +336,6 @@ export default function Preguntas() {
     }))
   }
 
-  // Agregar una nueva opción a la lista
   function agregarOpcion() {
     if (form.opciones.length >= 10) return
     const sigEtiqueta = sugerirSiguienteEtiqueta(form.opciones)
@@ -269,7 +345,6 @@ export default function Preguntas() {
     }))
   }
 
-  // Eliminar una opción
   function eliminarOpcion(idx) {
     if (form.opciones.length <= 2) {
       alert('La pregunta debe tener al menos 2 opciones de respuesta.')
@@ -281,7 +356,6 @@ export default function Preguntas() {
     }))
   }
 
-  // Manejar cambio en campos de opciones
   function actualizarOpcion(idx, campo, valor) {
     setForm((prev) => {
       const nuevas = [...prev.opciones]
@@ -290,16 +364,15 @@ export default function Preguntas() {
     })
   }
 
-  // Guardar pregunta (crear o editar)
+  // Guardar pregunta
   async function manejarGuardar(e) {
     e.preventDefault()
     setGuardando(true)
     setErroresForm({})
     setAviso(null)
 
-    // Validaciones locales rápidas
-    if (!form.enunciado.trim()) {
-      setErroresForm({ enunciado: ['El enunciado de la pregunta es obligatorio.'] })
+    if (!form.enunciado.trim() && !form.imagen_archivo_id) {
+      setErroresForm({ enunciado: ['Debes ingresar al menos un enunciado escrito o subir una imagen ilustrativa.'] })
       setGuardando(false)
       return
     }
@@ -322,7 +395,8 @@ export default function Preguntas() {
       prueba_id: parseInt(form.prueba_id, 10),
       dimension_id: form.dimension_id ? parseInt(form.dimension_id, 10) : null,
       orden: form.orden ? parseInt(form.orden, 10) : null,
-      enunciado: form.enunciado.trim(),
+      enunciado: form.enunciado.trim() || null,
+      imagen_archivo_id: form.imagen_archivo_id || null,
       opciones: form.opciones.map((o) => ({
         id: o.id || undefined,
         etiqueta: o.etiqueta.trim().toUpperCase(),
@@ -334,14 +408,14 @@ export default function Preguntas() {
     try {
       if (modoModal === 'crear') {
         await crearPreguntaAdmin(payload)
-        setAviso({ tipo: 'exito', mensaje: 'Pregunta agregada con éxito al banco de preguntas.' })
+        setAviso({ tipo: 'exito', mensaje: 'Pregunta agregada con éxito al banco.' })
       } else {
         await actualizarPreguntaAdmin(form.id, payload)
         setAviso({ tipo: 'exito', mensaje: 'Pregunta actualizada exitosamente.' })
       }
 
       setMostrarModal(false)
-      await recargarPreguntas()
+      await cargarPreguntas(pruebaActivaId, paginaActual, porPagina, busqueda)
     } catch (err) {
       if (err.errors) {
         setErroresForm(err.errors)
@@ -356,12 +430,12 @@ export default function Preguntas() {
   // Eliminar pregunta
   async function manejarEliminar(pregunta) {
     if (pregunta.tiene_respuestas) {
-      alert('Esta pregunta no puede ser eliminada porque ya ha sido respondida por postulantes en evaluaciones previas.')
+      alert('Esta pregunta no puede ser eliminada porque ya ha sido respondida en evaluaciones previas.')
       return
     }
 
     const confirmar = window.confirm(
-      `¿Estás seguro de eliminar permanentemente la Pregunta #${pregunta.orden}?\n"${pregunta.enunciado}"\nEsta acción eliminará también sus ${pregunta.opciones.length} opciones.`
+      `¿Deseas eliminar permanentemente la Pregunta #${pregunta.orden}?\nEsta acción es irreversible.`
     )
     if (!confirmar) return
 
@@ -369,7 +443,7 @@ export default function Preguntas() {
     try {
       const res = await eliminarPreguntaAdmin(pregunta.id)
       setAviso({ tipo: 'exito', mensaje: res.message || 'Pregunta eliminada exitosamente.' })
-      await recargarPreguntas()
+      await cargarPreguntas(pruebaActivaId, paginaActual, porPagina, busqueda)
     } catch (err) {
       setAviso({ tipo: 'error', mensaje: err.message || 'No fue posible eliminar la pregunta.' })
     } finally {
@@ -377,310 +451,250 @@ export default function Preguntas() {
     }
   }
 
-  if (cargando) {
+  if (cargandoInicial) {
     return <Esqueleto cantidad={4} />
   }
 
   if (error) {
-    return <ErrorCarga mensaje={error} reintentar={() => recargarPreguntas()} />
+    return <ErrorCarga mensaje={error} reintentar={() => window.location.reload()} />
   }
 
   return (
     <div>
-      {/* Cabecera Principal */}
-      <header className="seccion__cabecera" style={{ marginBottom: '1.25rem' }}>
+      {/* 1. Cabecera Limpia */}
+      <header
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          marginBottom: '1.25rem',
+        }}
+      >
         <div>
-          <span className="convocatoria__facultad" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Evaluación Psicométrica & Técnica
-          </span>
-          <h1 className="titulo-pagina" style={{ margin: '0.2rem 0' }}>
+          <h1 className="titulo-pagina" style={{ margin: '0 0 0.2rem' }}>
             Banco de Preguntas
           </h1>
-          <p className="seccion__descripcion" style={{ margin: 0 }}>
-            Administra los reactivos, factores evaluados, opciones de respuesta y matrices de puntaje para cada prueba psicométrica.
+          <p style={{ margin: 0, color: 'var(--texto-suave)', fontSize: '0.9rem' }}>
+            Gestiona los reactivos y opciones organizados por prueba psicométrica.
           </p>
         </div>
 
-        <button type="button" className="boton boton--primario" onClick={() => abrirCrear()}>
-          <Plus size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
+        <button type="button" className="boton boton--primario" onClick={abrirCrear}>
+          <Plus size={16} style={{ marginRight: '0.35rem', verticalAlign: 'middle' }} />
           Nueva Pregunta
         </button>
       </header>
 
-      {/* Alerta de aviso */}
+      {/* Aviso */}
       {aviso && (
-        <div className={`aviso aviso--${aviso.tipo}`} role="alert" style={{ marginBottom: '1.25rem' }}>
+        <div className={`aviso aviso--${aviso.tipo}`} role="alert" style={{ marginBottom: '1rem' }}>
           <p>{aviso.mensaje}</p>
         </div>
       )}
 
-      {/* Tarjetas de Métricas Institucionales */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.5rem',
-        }}
-      >
-        <div className="tarjeta" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem' }}>
-          <div
-            style={{
-              padding: '0.75rem',
-              borderRadius: '12px',
-              background: 'var(--primario-suave)',
-              color: 'var(--primario)',
-              display: 'flex',
-            }}
-          >
-            <FileQuestion size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.1 }}>
-              {catalogo.resumen?.total_preguntas ?? 0}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--texto-suave)', marginTop: '0.2rem' }}>
-              Preguntas en Banco
-            </div>
-          </div>
-        </div>
-
-        <div className="tarjeta" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem' }}>
-          <div
-            style={{
-              padding: '0.75rem',
-              borderRadius: '12px',
-              background: 'var(--superficie-suave)',
-              color: 'var(--texto)',
-              display: 'flex',
-            }}
-          >
-            <Layers size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.1 }}>
-              {catalogo.resumen?.total_pruebas ?? 0}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--texto-suave)', marginTop: '0.2rem' }}>
-              Pruebas Psicotécnicas
-            </div>
-          </div>
-        </div>
-
-        <div className="tarjeta" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem' }}>
-          <div
-            style={{
-              padding: '0.75rem',
-              borderRadius: '12px',
-              background: 'var(--destacado-suave)',
-              color: 'var(--destacado)',
-              display: 'flex',
-            }}
-          >
-            <Sparkles size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.1 }}>
-              {catalogo.resumen?.total_dimensiones ?? 0}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--texto-suave)', marginTop: '0.2rem' }}>
-              Dimensiones Evaluadas
-            </div>
-          </div>
-        </div>
-
-        <div className="tarjeta" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem' }}>
-          <div
-            style={{
-              padding: '0.75rem',
-              borderRadius: '12px',
-              background: 'var(--exito-suave)',
-              color: 'var(--exito)',
-              display: 'flex',
-            }}
-          >
-            <FileCheck size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.1 }}>
-              {preguntasFiltradas.length}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--texto-suave)', marginTop: '0.2rem' }}>
-              Preguntas Mostradas
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Selector Rápido de Pruebas (Pills) */}
+      {/* 2. Pestañas Limpias para los 4 Tests Principales (+ Selector para Otros) */}
       <div
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
           gap: '0.5rem',
-          overflowX: 'auto',
-          paddingBottom: '0.5rem',
-          marginBottom: '1rem',
+          borderBottom: '2px solid var(--borde)',
+          paddingBottom: '0.75rem',
+          marginBottom: '1.25rem',
         }}
       >
-        <button
-          type="button"
-          onClick={() => {
-            setFiltroPrueba('')
-            recargarPreguntas({ prueba_id: '' })
-          }}
-          className={`boton ${filtroPrueba === '' ? 'boton--primario' : 'boton--secundario'} boton--chico`}
-          style={{ whiteSpace: 'nowrap', borderRadius: '20px' }}
-        >
-          Todas las Pruebas ({catalogo.resumen?.total_preguntas ?? 0})
-        </button>
-
-        {catalogo.pruebas.map((p) => {
-          const activa = String(filtroPrueba) === String(p.id)
+        {pruebasPrincipales.map((p) => {
+          const estaActiva = p.id === pruebaActivaId
           return (
             <button
               key={p.id}
               type="button"
-              onClick={() => {
-                setFiltroPrueba(String(p.id))
-                recargarPreguntas({ prueba_id: String(p.id) })
+              onClick={() => cambiarPrueba(p.id)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.55rem 1rem',
+                borderRadius: '8px',
+                border: 'none',
+                fontWeight: estaActiva ? 700 : 500,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                background: estaActiva ? 'var(--primario)' : 'var(--superficie)',
+                color: estaActiva ? '#fff' : 'var(--texto)',
+                boxShadow: estaActiva ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+                transition: 'all 0.15s ease-in-out',
               }}
-              className={`boton ${activa ? 'boton--primario' : 'boton--secundario'} boton--chico`}
-              style={{ whiteSpace: 'nowrap', borderRadius: '20px' }}
             >
-              {p.nombre} ({p.preguntas_count ?? 0})
+              <span>{p.nombre}</span>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.1rem 0.45rem',
+                  borderRadius: '12px',
+                  background: estaActiva ? 'rgba(255,255,255,0.25)' : 'var(--superficie-suave)',
+                  color: estaActiva ? '#fff' : 'var(--texto-suave)',
+                }}
+              >
+                {p.preguntas_count}
+              </span>
             </button>
           )
         })}
+
+        {/* Menú para pruebas técnicas adicionales si existen */}
+        {otrasPruebas.length > 0 && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Otras pruebas:</span>
+            <select
+              className="campo__control"
+              style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem', width: 'auto' }}
+              value={otrasPruebas.some((o) => o.id === pruebaActivaId) ? pruebaActivaId : ''}
+              onChange={(e) => {
+                if (e.target.value) cambiarPrueba(parseInt(e.target.value, 10))
+              }}
+            >
+              <option value="" disabled>
+                -- Seleccionar otra prueba --
+              </option>
+              {otrasPruebas.map((op) => (
+                <option key={op.id} value={op.id}>
+                  {op.nombre} ({op.preguntas_count} preguntas)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {/* Barra de Filtros y Búsqueda */}
-      <div className="filtros" style={{ marginBottom: '1.5rem', alignItems: 'center' }}>
-        <div className="filtros__campo" style={{ flex: '1 1 200px' }}>
-          <label htmlFor="filtro-prueba">Prueba Psicotécnica</label>
-          <select
-            id="filtro-prueba"
-            className="campo__control"
-            value={filtroPrueba}
-            onChange={(e) => {
-              const val = e.target.value
-              setFiltroPrueba(val)
-              recargarPreguntas({ prueba_id: val })
-            }}
-          >
-            <option value="">-- Todas las Pruebas --</option>
-            {catalogo.pruebas.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre} ({p.preguntas_count ?? 0} preguntas)
-              </option>
-            ))}
-          </select>
+      {/* 3. Barra de Control: Conteo de la prueba, Búsqueda y Paginación */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.75rem',
+          marginBottom: '1rem',
+          background: 'var(--superficie)',
+          padding: '0.75rem 1rem',
+          borderRadius: '8px',
+          border: '1px solid var(--borde)',
+        }}
+      >
+        <div style={{ fontSize: '0.9rem', color: 'var(--texto)' }}>
+          Mostrando preguntas de: <strong>{pruebaSeleccionada?.nombre}</strong>
+          <span style={{ color: 'var(--texto-suave)', marginLeft: '0.5rem' }}>
+            ({metaPaginacion.total} en total)
+          </span>
         </div>
 
-        <div className="filtros__campo" style={{ flex: '1 1 200px' }}>
-          <label htmlFor="filtro-dimension">Dimensión Psicométrica</label>
-          <select
-            id="filtro-dimension"
-            className="campo__control"
-            value={filtroDimension}
-            onChange={(e) => {
-              const val = e.target.value
-              setFiltroDimension(val)
-              recargarPreguntas({ dimension_id: val })
-            }}
-          >
-            <option value="">-- Todas las Dimensiones --</option>
-            {catalogo.dimensiones.map((d) => (
-              <option key={d.id} value={d.id}>
-                [{d.tipo}] {d.codigo} - {d.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filtros__campo" style={{ flex: '2 1 260px' }}>
-          <label htmlFor="filtro-busqueda">Buscar en Enunciados u Opciones</label>
-          <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Buscador */}
+          <div style={{ position: 'relative', width: '220px' }}>
             <Search
-              size={16}
+              size={14}
               style={{
                 position: 'absolute',
-                left: '0.75rem',
+                left: '0.65rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--texto-suave)',
               }}
             />
             <input
-              id="filtro-busqueda"
               type="text"
               className="campo__control"
-              style={{ paddingLeft: '2.25rem' }}
-              placeholder="Ej. iniciativa, liderazgo, problemas..."
+              style={{ padding: '0.35rem 0.5rem 0.35rem 2rem', fontSize: '0.85rem' }}
+              placeholder="Buscar pregunta..."
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => {
+                setBusqueda(e.target.value)
+                setPaginaActual(1)
+                cargarPreguntas(pruebaActivaId, 1, porPagina, e.target.value)
+              }}
             />
           </div>
-        </div>
 
-        <button
-          type="button"
-          className="boton boton--secundario"
-          style={{ height: '42px', alignSelf: 'flex-end' }}
-          onClick={() => recargarPreguntas()}
-          disabled={cargandoPreguntas}
-          title="Actualizar listado"
-        >
-          <RefreshCw size={16} className={cargandoPreguntas ? 'animacion-rotar' : ''} />
-        </button>
+          {/* Por página */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem' }}>
+            <span style={{ color: 'var(--texto-suave)' }}>Por pág:</span>
+            <select
+              className="campo__control"
+              style={{ padding: '0.35rem 0.5rem', fontSize: '0.85rem', width: 'auto' }}
+              value={porPagina}
+              onChange={(e) => {
+                const nuevaCant = parseInt(e.target.value, 10)
+                setPorPagina(nuevaCant)
+                setPaginaActual(1)
+                cargarPreguntas(pruebaActivaId, 1, nuevaCant, busqueda)
+              }}
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            className="boton boton--secundario boton--chico"
+            onClick={() => cargarPreguntas(pruebaActivaId, paginaActual, porPagina, busqueda)}
+            title="Recargar"
+          >
+            <RefreshCw size={14} className={cargandoPreguntas ? 'animacion-rotar' : ''} />
+          </button>
+        </div>
       </div>
 
-      {/* Listado de Preguntas */}
+      {/* 4. Lista Paginada de Preguntas */}
       {cargandoPreguntas ? (
         <Esqueleto cantidad={3} />
-      ) : preguntasFiltradas.length === 0 ? (
-        <div className="tarjeta" style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
-          <Filter size={40} style={{ color: 'var(--texto-suave)', marginBottom: '0.75rem', opacity: 0.7 }} />
-          <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.5rem' }}>No se encontraron preguntas</h2>
-          <p style={{ color: 'var(--texto-suave)', maxWidth: '460px', margin: '0 auto 1.25rem' }}>
-            No hay reactivos que coincidan con los filtros seleccionados. Puedes cambiar de prueba o agregar una nueva pregunta.
+      ) : preguntas.length === 0 ? (
+        <div className="tarjeta" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+          <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem' }}>
+            Esta prueba no tiene preguntas registradas
           </p>
-          <button type="button" className="boton boton--primario" onClick={() => abrirCrear()}>
+          <p style={{ color: 'var(--texto-suave)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+            {busqueda
+              ? 'No hay resultados que coincidan con la búsqueda.'
+              : 'Empieza agregando la primera pregunta para esta evaluación psicométrica.'}
+          </p>
+          <button type="button" className="boton boton--primario" onClick={abrirCrear}>
             <Plus size={16} style={{ marginRight: '0.35rem' }} />
-            Crear Nueva Pregunta
+            Crear Pregunta
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          {preguntasFiltradas.map((preg) => (
+        <div style={{ display: 'grid', gap: '0.85rem' }}>
+          {preguntas.map((preg) => (
             <article
               key={preg.id}
               className="tarjeta"
               style={{
-                borderLeft: preg.dimension?.tipo === 'PERSONALIDAD'
-                  ? '4px solid var(--primario)'
-                  : preg.dimension?.tipo === 'HABILIDAD_BLANDA'
-                  ? '4px solid var(--exito)'
-                  : '4px solid var(--borde)',
-                padding: '1.25rem',
-                transition: 'box-shadow 0.2s',
+                padding: '1.1rem',
+                borderLeft: '4px solid var(--primario)',
+                background: 'var(--superficie)',
               }}
             >
-              {/* Cabecera de la Tarjeta */}
+              {/* Encabezado del ítem */}
               <div
                 style={{
                   display: 'flex',
-                  flexWrap: 'wrap',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '0.5rem',
-                  marginBottom: '0.85rem',
+                  marginBottom: '0.65rem',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span
                     style={{
                       background: 'var(--superficie-suave)',
-                      padding: '0.2rem 0.55rem',
+                      padding: '0.15rem 0.5rem',
                       borderRadius: '6px',
                       fontWeight: 700,
                       fontSize: '0.85rem',
@@ -690,25 +704,15 @@ export default function Preguntas() {
                     #{preg.orden}
                   </span>
 
-                  <span className="insignia insignia--neutro" style={{ fontSize: '0.75rem' }}>
-                    {preg.prueba?.nombre || 'Prueba Psicométrica'}
-                  </span>
-
                   {preg.dimension && (
                     <span
                       style={{
-                        padding: '0.2rem 0.55rem',
+                        padding: '0.15rem 0.5rem',
                         borderRadius: '6px',
                         fontSize: '0.75rem',
                         fontWeight: 600,
-                        background:
-                          preg.dimension.tipo === 'PERSONALIDAD'
-                            ? 'var(--primario-suave)'
-                            : 'var(--exito-suave)',
-                        color:
-                          preg.dimension.tipo === 'PERSONALIDAD'
-                            ? 'var(--primario)'
-                            : 'var(--exito)',
+                        background: 'var(--primario-suave)',
+                        color: 'var(--primario)',
                       }}
                     >
                       {preg.dimension.codigo}: {preg.dimension.nombre}
@@ -718,23 +722,23 @@ export default function Preguntas() {
                   {preg.tiene_respuestas && (
                     <span
                       className="insignia insignia--advertencia"
-                      style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                      title="Esta pregunta tiene respuestas de candidatos registradas en intentos previos"
+                      style={{ fontSize: '0.72rem' }}
+                      title="Pregunta respondida por postulantes"
                     >
-                      🔒 Con Respuestas ({preg.respuestas_count})
+                      🔒 Respondida ({preg.respuestas_count})
                     </span>
                   )}
                 </div>
 
-                {/* Acciones de la Pregunta */}
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                {/* Acciones */}
+                <div style={{ display: 'flex', gap: '0.35rem' }}>
                   <button
                     type="button"
                     className="boton boton--secundario boton--chico"
                     onClick={() => duplicarPregunta(preg)}
-                    title="Clonar como nueva pregunta"
+                    title="Clonar como nueva"
                   >
-                    <Copy size={14} style={{ marginRight: '0.25rem' }} />
+                    <Copy size={13} style={{ marginRight: '0.2rem' }} />
                     Duplicar
                   </button>
 
@@ -742,9 +746,9 @@ export default function Preguntas() {
                     type="button"
                     className="boton boton--secundario boton--chico"
                     onClick={() => abrirEditar(preg)}
-                    title="Editar reactivo y opciones"
+                    title="Editar pregunta"
                   >
-                    <Edit3 size={14} style={{ marginRight: '0.25rem' }} />
+                    <Edit3 size={13} style={{ marginRight: '0.2rem' }} />
                     Editar
                   </button>
 
@@ -753,36 +757,60 @@ export default function Preguntas() {
                     className="boton boton--peligro boton--chico"
                     onClick={() => manejarEliminar(preg)}
                     disabled={preg.tiene_respuestas || eliminandoId === preg.id}
-                    title={
-                      preg.tiene_respuestas
-                        ? 'No se puede eliminar: tiene intentos de postulantes registrados'
-                        : 'Eliminar pregunta'
-                    }
+                    title={preg.tiene_respuestas ? 'No eliminable (con respuestas)' : 'Eliminar'}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={13} />
                   </button>
                 </div>
               </div>
 
-              {/* Enunciado de la Pregunta */}
-              <p
-                style={{
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  margin: '0 0 1rem',
-                  color: 'var(--texto)',
-                  lineHeight: 1.45,
-                }}
-              >
-                {preg.enunciado}
-              </p>
+              {/* Si incluye lámina o imagen gráfica */}
+              {preg.imagen_url && (
+                <div
+                  style={{
+                    marginBottom: '0.85rem',
+                    padding: '0.5rem',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid var(--borde)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <img
+                    src={preg.imagen_url}
+                    alt={`Lámina Pregunta #${preg.orden}`}
+                    style={{
+                      maxHeight: '180px',
+                      maxWidth: '100%',
+                      objectFit: 'contain',
+                      borderRadius: '4px',
+                      display: 'inline-block',
+                    }}
+                  />
+                </div>
+              )}
 
-              {/* Opciones de Respuesta */}
+              {/* Enunciado */}
+              {preg.enunciado && (
+                <p
+                  style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    margin: '0 0 0.85rem',
+                    color: 'var(--texto)',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {preg.enunciado}
+                </p>
+              )}
+
+              {/* Opciones de respuesta */}
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                  gap: '0.5rem',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                  gap: '0.45rem',
                 }}
               >
                 {preg.opciones?.map((opc) => {
@@ -794,24 +822,24 @@ export default function Preguntas() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: '8px',
+                        padding: '0.4rem 0.65rem',
+                        borderRadius: '6px',
                         background: tienePuntaje ? 'var(--superficie-suave)' : 'transparent',
                         border: '1px solid var(--borde)',
-                        fontSize: '0.85rem',
+                        fontSize: '0.82rem',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
                         <span
                           style={{
-                            width: '24px',
-                            height: '24px',
+                            width: '20px',
+                            height: '20px',
                             borderRadius: '50%',
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontWeight: 700,
-                            fontSize: '0.75rem',
+                            fontSize: '0.72rem',
                             flexShrink: 0,
                             background: tienePuntaje ? 'var(--primario)' : 'var(--borde)',
                             color: tienePuntaje ? '#fff' : 'var(--texto-suave)',
@@ -819,24 +847,16 @@ export default function Preguntas() {
                         >
                           {opc.etiqueta}
                         </span>
-                        <span
-                          style={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            color: 'var(--texto)',
-                          }}
-                        >
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {opc.texto}
                         </span>
                       </div>
 
                       <span
                         style={{
-                          fontSize: '0.75rem',
+                          fontSize: '0.72rem',
                           fontWeight: 700,
-                          flexShrink: 0,
-                          padding: '0.15rem 0.4rem',
+                          padding: '0.1rem 0.35rem',
                           borderRadius: '4px',
                           background: tienePuntaje ? 'var(--exito-suave)' : 'transparent',
                           color: tienePuntaje ? 'var(--exito)' : 'var(--texto-suave)',
@@ -853,8 +873,64 @@ export default function Preguntas() {
         </div>
       )}
 
+      {/* 5. Controles de Paginación */}
+      {metaPaginacion.total > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            marginTop: '1.25rem',
+            padding: '0.75rem 1rem',
+            background: 'var(--superficie)',
+            borderRadius: '8px',
+            border: '1px solid var(--borde)',
+          }}
+        >
+          <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>
+            Mostrando preguntas <strong>{metaPaginacion.from}</strong> a <strong>{metaPaginacion.to}</strong> de{' '}
+            <strong>{metaPaginacion.total}</strong>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <button
+              type="button"
+              className="boton boton--secundario boton--chico"
+              onClick={() => cambiarPagina(metaPaginacion.current_page - 1)}
+              disabled={metaPaginacion.current_page <= 1}
+            >
+              <ChevronLeft size={16} />
+              <span>Anterior</span>
+            </button>
+
+            <span
+              style={{
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                padding: '0 0.5rem',
+                color: 'var(--texto)',
+              }}
+            >
+              Página {metaPaginacion.current_page} de {metaPaginacion.last_page}
+            </span>
+
+            <button
+              type="button"
+              className="boton boton--secundario boton--chico"
+              onClick={() => cambiarPagina(metaPaginacion.current_page + 1)}
+              disabled={metaPaginacion.current_page >= metaPaginacion.last_page}
+            >
+              <span>Siguiente</span>
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ========================================================================= */}
-      {/* MODAL DE CREACIÓN / EDICIÓN DE PREGUNTAS                                 */}
+      {/* MODAL CREAR / EDITAR PREGUNTA (CON SOPORTE DE IMÁGENES)                  */}
       {/* ========================================================================= */}
       {mostrarModal && (
         <div
@@ -876,30 +952,30 @@ export default function Preguntas() {
             className="tarjeta"
             style={{
               width: '100%',
-              maxWidth: '720px',
+              maxWidth: '680px',
               maxHeight: '92vh',
               overflowY: 'auto',
-              padding: '1.75rem',
-              borderRadius: '16px',
+              padding: '1.5rem',
+              borderRadius: '14px',
             }}
           >
-            {/* Cabecera del Modal */}
+            {/* Cabecera Modal */}
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '1.25rem',
+                alignItems: 'center',
+                marginBottom: '1rem',
                 borderBottom: '1px solid var(--borde)',
-                paddingBottom: '1rem',
+                paddingBottom: '0.75rem',
               }}
             >
               <div>
-                <h2 style={{ fontSize: '1.3rem', margin: '0 0 0.25rem' }}>
-                  {modoModal === 'crear' ? 'Nueva Pregunta Psicotécnica' : `Editar Pregunta #${form.orden}`}
+                <h2 style={{ fontSize: '1.2rem', margin: 0 }}>
+                  {modoModal === 'crear' ? 'Nueva Pregunta' : `Editar Pregunta #${form.orden}`}
                 </h2>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--texto-suave)' }}>
-                  Configura el enunciado, el factor de medición y las alternativas con sus respectivas ponderaciones.
+                <p style={{ margin: '0.15rem 0 0', fontSize: '0.8rem', color: 'var(--texto-suave)' }}>
+                  {pruebaSeleccionada?.nombre}
                 </p>
               </div>
               <button
@@ -912,27 +988,17 @@ export default function Preguntas() {
               </button>
             </div>
 
-            {/* Aviso dentro del modal si tiene respuestas */}
-            {form.tiene_respuestas && (
-              <div className="aviso aviso--advertencia" style={{ marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-                <p>
-                  <strong>Atención:</strong> Esta pregunta ya registra respuestas en evaluaciones de postulantes.
-                  Puedes actualizar el enunciado y ponderaciones, pero no puedes remover opciones que tengan respuestas asociadas.
-                </p>
-              </div>
-            )}
-
             <form onSubmit={manejarGuardar}>
-              {/* Fila 1: Prueba & Dimensión */}
+              {/* Prueba & Dimensión */}
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                   gap: '0.75rem',
-                  marginBottom: '1rem',
+                  marginBottom: '0.85rem',
                 }}
               >
-                <Campo etiqueta="Prueba Psicotécnica *" error={erroresForm.prueba_id?.[0]}>
+                <Campo etiqueta="Prueba *" error={erroresForm.prueba_id?.[0]}>
                   <select
                     required
                     className="campo__control"
@@ -940,7 +1006,6 @@ export default function Preguntas() {
                     disabled={modoModal === 'editar'}
                     onChange={(e) => setForm({ ...form, prueba_id: e.target.value })}
                   >
-                    <option value="">-- Seleccionar Prueba --</option>
                     {catalogo.pruebas.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.nombre}
@@ -965,45 +1030,135 @@ export default function Preguntas() {
                 </Campo>
               </div>
 
-              {/* Fila 2: Orden & Enunciado */}
-              <div style={{ marginBottom: '1rem' }}>
+              {/* Orden & Enunciado */}
+              <div style={{ marginBottom: '0.85rem' }}>
                 <Campo
                   etiqueta="Número de Orden (Opcional)"
                   error={erroresForm.orden?.[0]}
-                  ayuda="Déjalo vacío para asignación correlativa automática al final de la prueba."
+                  ayuda="Déjalo vacío para asignarlo correlativamente al final de la prueba."
                 >
                   <input
                     type="number"
                     min="1"
                     className="campo__control"
-                    placeholder="Ej. 1, 2, 3... (Automático si está vacío)"
+                    placeholder="Automático si está vacío"
                     value={form.orden}
                     onChange={(e) => setForm({ ...form, orden: e.target.value })}
                   />
                 </Campo>
               </div>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <Campo etiqueta="Enunciado de la Pregunta *" error={erroresForm.enunciado?.[0]}>
+              <div style={{ marginBottom: '1rem' }}>
+                <Campo etiqueta="Enunciado de la Pregunta" error={erroresForm.enunciado?.[0]}>
                   <textarea
-                    required
                     rows="3"
                     className="campo__control"
-                    placeholder="Escribe claramente la pregunta o afirmación reactiva..."
+                    placeholder="Escribe la pregunta o afirmación reactiva..."
                     value={form.enunciado}
                     onChange={(e) => setForm({ ...form, enunciado: e.target.value })}
                   />
                 </Campo>
               </div>
 
-              {/* Barra de Plantillas Rápidas (PRESETS) */}
+              {/* SUBIDA DE IMAGEN / LÁMINA GRÁFICA */}
+              <div
+                style={{
+                  background: 'var(--superficie-suave)',
+                  border: '1px dashed var(--borde)',
+                  borderRadius: '10px',
+                  padding: '0.85rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <ImageIcon size={15} style={{ color: 'var(--primario)' }} />
+                    Lámina o Imagen Gráfica (Opcional)
+                  </label>
+                  {form.imagen_url && (
+                    <button
+                      type="button"
+                      className="boton boton--peligro boton--chico"
+                      onClick={quitarImagen}
+                      style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+                    >
+                      <Trash2 size={12} style={{ marginRight: '0.2rem' }} />
+                      Quitar Imagen
+                    </button>
+                  )}
+                </div>
+
+                {form.imagen_url ? (
+                  <div style={{ textAlign: 'center', padding: '0.5rem', background: '#fff', borderRadius: '6px' }}>
+                    <img
+                      src={form.imagen_url}
+                      alt="Vista previa de la lámina"
+                      style={{
+                        maxHeight: '140px',
+                        maxWidth: '100%',
+                        objectFit: 'contain',
+                        borderRadius: '4px',
+                      }}
+                    />
+                    <div style={{ fontSize: '0.75rem', color: 'var(--texto-suave)', marginTop: '0.3rem' }}>
+                      Imagen vinculada correctamente a la pregunta
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        padding: '1rem',
+                        cursor: subiendoImagen ? 'wait' : 'pointer',
+                        borderRadius: '6px',
+                        background: '#fff',
+                        border: '1px solid var(--borde)',
+                        color: 'var(--texto-suave)',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <UploadCloud size={24} style={{ color: 'var(--primario)' }} />
+                      <span>{subiendoImagen ? 'Subiendo imagen...' : 'Haz clic para seleccionar o subir imagen'}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--texto-suave)' }}>
+                        Formatos: PNG, JPG, WEBP (Máx. 5MB)
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        disabled={subiendoImagen}
+                        onChange={manejarSubirImagen}
+                      />
+                    </label>
+                    {erroresForm.imagen && (
+                      <p style={{ color: 'var(--error)', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>
+                        {erroresForm.imagen[0]}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Plantillas Rápidas */}
               <div
                 style={{
                   background: 'var(--superficie-suave)',
                   border: '1px solid var(--borde)',
-                  borderRadius: '12px',
-                  padding: '0.85rem',
-                  marginBottom: '1.25rem',
+                  borderRadius: '10px',
+                  padding: '0.75rem',
+                  marginBottom: '1rem',
                 }}
               >
                 <div
@@ -1011,42 +1166,41 @@ export default function Preguntas() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.35rem',
-                    marginBottom: '0.6rem',
-                    fontSize: '0.85rem',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.8rem',
                     fontWeight: 700,
                   }}
                 >
-                  <Sparkles size={16} style={{ color: 'var(--primario)' }} />
+                  <Sparkles size={14} style={{ color: 'var(--primario)' }} />
                   <span>Plantillas Rápidas de Opciones:</span>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                   {Object.entries(PLANTILLAS).map(([clave, plant]) => (
                     <button
                       key={clave}
                       type="button"
                       className="boton boton--secundario boton--chico"
-                      style={{ fontSize: '0.8rem' }}
+                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.55rem' }}
                       onClick={() => aplicarPlantilla(clave)}
-                      title={plant.descripcion}
                     >
-                      <span style={{ marginRight: '0.3rem' }}>{plant.icono}</span>
+                      <span style={{ marginRight: '0.25rem' }}>{plant.icono}</span>
                       {plant.nombre}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Sección de Opciones de Respuesta */}
-              <div style={{ marginBottom: '1.5rem' }}>
+              {/* Opciones de Respuesta */}
+              <div style={{ marginBottom: '1.25rem' }}>
                 <div
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '0.75rem',
+                    marginBottom: '0.5rem',
                   }}
                 >
-                  <label style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700 }}>
                     Opciones de Respuesta ({form.opciones.length} alternativas)
                   </label>
                   <button
@@ -1054,104 +1208,97 @@ export default function Preguntas() {
                     className="boton boton--secundario boton--chico"
                     onClick={agregarOpcion}
                     disabled={form.opciones.length >= 10}
+                    style={{ fontSize: '0.75rem' }}
                   >
-                    <Plus size={14} style={{ marginRight: '0.25rem' }} />
+                    <Plus size={13} style={{ marginRight: '0.2rem' }} />
                     Agregar Opción
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gap: '0.6rem' }}>
+                <div style={{ display: 'grid', gap: '0.45rem' }}>
                   {form.opciones.map((opc, idx) => (
                     <div
                       key={opc.id || idx}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '60px 1fr 100px auto auto',
-                        gap: '0.5rem',
+                        gridTemplateColumns: '50px 1fr 90px auto auto',
+                        gap: '0.4rem',
                         alignItems: 'center',
                         background: 'var(--superficie)',
                         border: '1px solid var(--borde)',
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: '8px',
+                        padding: '0.4rem 0.6rem',
+                        borderRadius: '6px',
                       }}
                     >
-                      {/* Etiqueta (A, B, C...) */}
                       <input
                         type="text"
                         maxLength="1"
                         className="campo__control"
-                        style={{ textAlign: 'center', fontWeight: 700, textTransform: 'uppercase' }}
+                        style={{ textAlign: 'center', fontWeight: 700, padding: '0.35rem 0.2rem' }}
                         value={opc.etiqueta}
                         onChange={(e) => actualizarOpcion(idx, 'etiqueta', e.target.value.toUpperCase())}
-                        title="Etiqueta identificadora (ej. A, B, 1)"
                       />
 
-                      {/* Texto de la Opción */}
                       <input
                         type="text"
                         required
                         className="campo__control"
-                        placeholder={`Texto para la opción ${opc.etiqueta}...`}
+                        placeholder={`Texto opción ${opc.etiqueta}...`}
+                        style={{ padding: '0.35rem 0.5rem' }}
                         value={opc.texto}
                         onChange={(e) => actualizarOpcion(idx, 'texto', e.target.value)}
                       />
 
-                      {/* Puntaje */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                         <input
                           type="number"
                           step="0.5"
                           min="0"
                           max="100"
                           className="campo__control"
-                          style={{ textAlign: 'right' }}
+                          style={{ textAlign: 'right', padding: '0.35rem 0.3rem' }}
                           value={opc.puntaje}
                           onChange={(e) => actualizarOpcion(idx, 'puntaje', e.target.value)}
-                          title="Puntaje otorgado al elegir esta opción"
                         />
-                        <span style={{ fontSize: '0.75rem', color: 'var(--texto-suave)' }}>pts</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--texto-suave)' }}>pts</span>
                       </div>
 
-                      {/* Botón rápido marcar correcta (1 pto) */}
                       <button
                         type="button"
                         className="boton boton--secundario boton--chico"
                         onClick={() => marcarComoUnicaCorrecta(idx)}
-                        title="Marcar como la única opción correcta (1 pt)"
+                        title="Marcar como la opción correcta (1 pt)"
                         style={{
-                          padding: '0.35rem 0.5rem',
+                          padding: '0.3rem 0.45rem',
                           background: parseFloat(opc.puntaje) > 0 ? 'var(--exito-suave)' : 'transparent',
                           color: parseFloat(opc.puntaje) > 0 ? 'var(--exito)' : 'inherit',
-                          borderColor: parseFloat(opc.puntaje) > 0 ? 'var(--exito)' : 'var(--borde)',
                         }}
                       >
-                        <CheckCircle2 size={14} />
+                        <CheckCircle2 size={13} />
                       </button>
 
-                      {/* Eliminar opción */}
                       <button
                         type="button"
                         className="boton boton--peligro boton--chico"
-                        style={{ padding: '0.35rem 0.5rem' }}
+                        style={{ padding: '0.3rem 0.45rem' }}
                         onClick={() => eliminarOpcion(idx)}
                         disabled={form.opciones.length <= 2}
-                        title="Eliminar esta opción"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Botones del Pie del Modal */}
+              {/* Botones Pie */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
-                  gap: '0.75rem',
+                  gap: '0.65rem',
                   borderTop: '1px solid var(--borde)',
-                  paddingTop: '1.25rem',
+                  paddingTop: '1rem',
                 }}
               >
                 <button
@@ -1164,22 +1311,7 @@ export default function Preguntas() {
                 </button>
 
                 <button type="submit" className="boton boton--primario" disabled={guardando}>
-                  {guardando ? (
-                    <>
-                      <RefreshCw size={16} className="animacion-rotar" style={{ marginRight: '0.35rem' }} />
-                      Guardando...
-                    </>
-                  ) : modoModal === 'crear' ? (
-                    <>
-                      <Plus size={16} style={{ marginRight: '0.35rem' }} />
-                      Guardar Pregunta
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={16} style={{ marginRight: '0.35rem' }} />
-                      Actualizar Pregunta
-                    </>
-                  )}
+                  {guardando ? 'Guardando...' : modoModal === 'crear' ? 'Guardar Pregunta' : 'Actualizar Pregunta'}
                 </button>
               </div>
             </form>
