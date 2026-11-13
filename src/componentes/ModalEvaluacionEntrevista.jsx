@@ -112,7 +112,12 @@ export default function ModalEvaluacionEntrevista({ postulacionId, alCerrar, alC
         alCalificar(res.data)
       }
     } catch (err) {
-      setError(err.mensaje || err.message || 'Error al guardar calificación de la entrevista.')
+      const mensaje =
+        err.mensaje ||
+        (err.errors ? Object.values(err.errors).flat().join('. ') : null) ||
+        err.message ||
+        'Error al guardar calificación de la entrevista.'
+      setError(mensaje)
     } finally {
       setGuardando(false)
     }

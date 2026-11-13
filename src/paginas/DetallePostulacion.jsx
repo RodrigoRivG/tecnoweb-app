@@ -169,8 +169,25 @@ export default function DetallePostulacion() {
           </p>
         </div>
         <div>
-          <span className="insignia insignia--pendiente" style={{ fontSize: '0.95rem', padding: '0.35rem 0.8rem' }}>
-            {postulacion.estado}
+          <span
+            className={`insignia ${
+              postulacion.estado === 'APROBADA'
+                ? 'insignia--exito'
+                : postulacion.estado === 'NO_APROBADA'
+                ? 'insignia--error'
+                : postulacion.estado === 'EN_PROCESO'
+                ? 'insignia--pendiente'
+                : 'insignia--neutro'
+            }`}
+            style={{ fontSize: '0.95rem', padding: '0.35rem 0.8rem' }}
+          >
+            {postulacion.estado === 'EN_PROCESO'
+              ? 'En Proceso'
+              : postulacion.estado === 'APROBADA'
+              ? 'Aprobada'
+              : postulacion.estado === 'NO_APROBADA'
+              ? 'No Aprobada'
+              : postulacion.estado}
           </span>
         </div>
       </header>

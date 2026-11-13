@@ -32,3 +32,26 @@ export async function eliminarCarrera(id) {
   return pedir(`/admin/carreras/${id}`, { metodo: 'DELETE' })
 }
 
+export async function obtenerUsuariosAdmin(filtros) {
+  return (await pedir('/admin/usuarios', { parametros: filtros })).data
+}
+
+export async function crearUsuarioAdmin(datos) {
+  return (await pedir('/admin/usuarios', { metodo: 'POST', cuerpo: datos })).data
+}
+
+export async function actualizarUsuarioAdmin(id, datos) {
+  return (await pedir(`/admin/usuarios/${id}`, { metodo: 'PUT', cuerpo: datos })).data
+}
+
+export async function obtenerRolesPermisosAdmin() {
+  return (await pedir('/admin/roles-permisos')).data
+}
+
+export async function actualizarPermisosRolAdmin(rolId, permisosIds) {
+  return (await pedir(`/admin/roles/${rolId}/permisos`, {
+    metodo: 'PUT',
+    cuerpo: { permisos_ids: permisosIds },
+  })).data
+}
+
