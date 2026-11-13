@@ -473,7 +473,7 @@ export default function RendirTest() {
                 </>
               ) : esTestLectura ? (
                 <>
-                  <strong>Instrucciones para Comprensión Lectora:</strong> Lee con detenimiento cada pasaje y responde a la pregunta de razonamiento analítico seleccionando la alternativa más precisa. Tienes 20 minutos para completar las 20 preguntas.
+                  <strong>Instrucciones para Habilidades y Aptitudes Específicas:</strong> Lee con detenimiento cada pasaje y responde a la pregunta de razonamiento analítico seleccionando la alternativa más precisa. Tienes 20 minutos para completar la prueba.
                 </>
               ) : esTestInteligencia ? (
                 <>
@@ -571,7 +571,7 @@ export default function RendirTest() {
               <span className="insignia insignia--primario">Habilidades Blandas</span>
             )}
             {esTestLectura && (
-              <span className="insignia insignia--primario">Lectura Comprensiva</span>
+              <span className="insignia insignia--primario">Habilidades y Aptitudes Específicas</span>
             )}
           </div>
 

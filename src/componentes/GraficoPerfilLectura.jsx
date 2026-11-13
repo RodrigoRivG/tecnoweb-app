@@ -6,7 +6,7 @@ export default function GraficoPerfilLectura({ diagnostico }) {
   const { aciertos, total, porcentaje, rango_cualitativo, percentil, interpretacion } = diagnostico
 
   return (
-    <section aria-label="Diagnóstico de Comprensión Lectora" className="tarjeta-diagnostico-ci">
+    <section aria-label="Diagnóstico de Habilidades y Aptitudes Específicas" className="tarjeta-diagnostico-ci">
       <div className="ci-badge-grande">
         <span className="ci-badge-grande__numero">{percentil}</span>
         <span className="ci-badge-grande__label">Percentil Poblacional</span>
