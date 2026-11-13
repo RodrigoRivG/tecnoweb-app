@@ -11,6 +11,7 @@ import Facultades from './paginas/panel/Facultades.jsx'
 import PanelLayout from './paginas/panel/PanelLayout.jsx'
 import Postulaciones from './paginas/panel/Postulaciones.jsx'
 import Usuarios from './paginas/panel/Usuarios.jsx'
+import RolesPermisos from './paginas/panel/RolesPermisos.jsx'
 import Registro from './paginas/Registro.jsx'
 import { SesionProvider } from './sesion/SesionContext.jsx'
 
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="postulaciones" element={<Postulaciones />} />
               <Route path="postulaciones/:id" element={<DetallePostulacion />} />
               <Route path="usuarios" element={<Usuarios />} />
+              <Route path="roles-permisos" element={<RolesPermisos />} />
             </Route>
             <Route path="*" element={<NoEncontrada />} />
           </Routes>

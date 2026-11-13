@@ -1,4 +1,4 @@
-import { Building2, FileText, GraduationCap, Users } from 'lucide-react'
+import { Building2, FileText, GraduationCap, Shield, Users } from 'lucide-react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { useSesion } from '../../sesion/SesionContext.jsx'
 import { esEvaluador } from '../../utilidades/roles.js'
@@ -23,6 +23,11 @@ const SECCIONES = [
     ruta: '/panel/usuarios',
     titulo: 'Usuarios',
     icono: <Users size={20} aria-hidden="true" />,
+  },
+  {
+    ruta: '/panel/roles-permisos',
+    titulo: 'Roles y Permisos (RBAC)',
+    icono: <Shield size={20} aria-hidden="true" />,
   },
 ]
 
