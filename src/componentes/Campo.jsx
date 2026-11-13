@@ -15,11 +15,13 @@ export default function Campo({ etiqueta, error, ayuda, opcional = false, classN
         {opcional && <span className="campo__opcional"> (opcional)</span>}
       </label>
 
-      {children({
-        id,
-        'aria-invalid': error ? true : undefined,
-        'aria-describedby': descripcion ? idDescripcion : undefined,
-      })}
+      {typeof children === 'function'
+        ? children({
+            id,
+            'aria-invalid': error ? true : undefined,
+            'aria-describedby': descripcion ? idDescripcion : undefined,
+          })
+        : children}
 
       {descripcion && (
         <p id={idDescripcion} className={error ? 'campo__error' : 'campo__ayuda'}>{descripcion}</p>
