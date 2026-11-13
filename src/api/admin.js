@@ -80,6 +80,13 @@ export async function obtenerCatalogoPruebasAdmin() {
   return (await pedir('/admin/banco-preguntas/catalogo')).data
 }
 
+export async function actualizarConfiguracionPruebaAdmin(pruebaId, datos) {
+  return (await pedir(`/admin/banco-preguntas/pruebas/${pruebaId}`, {
+    metodo: 'PUT',
+    cuerpo: datos,
+  })).data
+}
+
 export async function obtenerPreguntasAdmin(filtros) {
   return await pedir('/admin/preguntas', { parametros: filtros })
 }

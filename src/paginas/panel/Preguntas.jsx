@@ -9,12 +9,14 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Sliders,
   Sparkles,
   Trash2,
   UploadCloud,
   X,
 } from 'lucide-react'
 import {
+  actualizarConfiguracionPruebaAdmin,
   actualizarPreguntaAdmin,
   crearPreguntaAdmin,
   eliminarPreguntaAdmin,
@@ -129,6 +131,11 @@ export default function Preguntas() {
   const [guardando, setGuardando] = useState(false)
   const [subiendoImagen, setSubiendoImagen] = useState(false)
   const [eliminandoId, setEliminandoId] = useState(null)
+
+  // Configuración de muestreo / examen aleatorio de la prueba
+  const [mostrarModalConfig, setMostrarModalConfig] = useState(false)
+  const [formConfig, setFormConfig] = useState({ limite_preguntas: '' })
+  const [guardandoConfig, setGuardandoConfig] = useState(false)
 
   // Carga inicial: Catálogo y selección de la primera prueba
   useEffect(() => {
@@ -256,6 +263,38 @@ export default function Preguntas() {
       tiene_respuestas: pregunta.tiene_respuestas,
     })
     setMostrarModal(true)
+  }
+
+  // Abrir modal de configuración de muestreo de la prueba
+  function abrirConfiguracion() {
+    setFormConfig({
+      limite_preguntas: pruebaSeleccionada?.limite_preguntas ? String(pruebaSeleccionada.limite_preguntas) : '',
+    })
+    setMostrarModalConfig(true)
+  }
+
+  // Guardar configuración de muestreo aleatorio
+  async function manejarGuardarConfig(e) {
+    e.preventDefault()
+    setGuardandoConfig(true)
+    try {
+      const limite = formConfig.limite_preguntas ? parseInt(formConfig.limite_preguntas, 10) : null
+      await actualizarConfiguracionPruebaAdmin(pruebaActivaId, { limite_preguntas: limite })
+
+      const cat = await obtenerCatalogoPruebasAdmin()
+      setCatalogo(cat)
+      setMostrarModalConfig(false)
+      setAviso({
+        tipo: 'exito',
+        mensaje: limite
+          ? `Configuración guardada: cada postulante responderá una muestra de ${limite} preguntas aleatorias.`
+          : 'Configuración guardada: cada postulante responderá todas las preguntas del banco.',
+      })
+    } catch (err) {
+      setAviso({ tipo: 'error', mensaje: err.message || 'Error al guardar la configuración de muestreo.' })
+    } finally {
+      setGuardandoConfig(false)
+    }
   }
 
   // Duplicar pregunta
@@ -585,11 +624,41 @@ export default function Preguntas() {
           border: '1px solid var(--borde)',
         }}
       >
-        <div style={{ fontSize: '0.9rem', color: 'var(--texto)' }}>
-          Mostrando preguntas de: <strong>{pruebaSeleccionada?.nombre}</strong>
-          <span style={{ color: 'var(--texto-suave)', marginLeft: '0.5rem' }}>
-            ({metaPaginacion.total} en total)
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--texto)' }}>
+            <strong>{pruebaSeleccionada?.nombre}</strong>
+            <span style={{ color: 'var(--texto-suave)', marginLeft: '0.4rem' }}>
+              ({metaPaginacion.total} en el banco)
+            </span>
           </span>
+
+          <span
+            style={{
+              fontSize: '0.78rem',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '999px',
+              background: pruebaSeleccionada?.limite_preguntas ? 'var(--destacado-suave)' : 'var(--superficie-suave)',
+              color: pruebaSeleccionada?.limite_preguntas ? 'var(--destacado)' : 'var(--texto-suave)',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+            }}
+            title="Cantidad de preguntas aleatorias que responderá cada estudiante"
+          >
+            🎲 Examen: {pruebaSeleccionada?.limite_preguntas ? `${pruebaSeleccionada.limite_preguntas} aleatorias` : 'Todas las del banco'}
+          </span>
+
+          <button
+            type="button"
+            className="boton boton--secundario boton--chico"
+            onClick={abrirConfiguracion}
+            style={{ fontSize: '0.78rem', padding: '0.2rem 0.55rem' }}
+            title="Configurar cuántas preguntas aleatorias responderá el postulante"
+          >
+            <Sliders size={13} style={{ marginRight: '0.25rem' }} />
+            Configurar Muestreo
+          </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1312,6 +1381,107 @@ export default function Preguntas() {
 
                 <button type="submit" className="boton boton--primario" disabled={guardando}>
                   {guardando ? 'Guardando...' : modoModal === 'crear' ? 'Guardar Pregunta' : 'Actualizar Pregunta'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL CONFIGURACIÓN DE MUESTREO ALEATORIO (ENFOQUE B)                   */}
+      {/* ========================================================================= */}
+      {mostrarModalConfig && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 1000,
+            backdropFilter: 'blur(3px)',
+          }}
+        >
+          <div
+            className="tarjeta"
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              padding: '1.5rem',
+              borderRadius: '14px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+                borderBottom: '1px solid var(--borde)',
+                paddingBottom: '0.75rem',
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: '1.15rem', margin: 0 }}>
+                  Configuración de Examen
+                </h2>
+                <p style={{ margin: '0.15rem 0 0', fontSize: '0.8rem', color: 'var(--texto-suave)' }}>
+                  {pruebaSeleccionada?.nombre}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="boton boton--secundario boton--chico"
+                onClick={() => setMostrarModalConfig(false)}
+                aria-label="Cerrar modal"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={manejarGuardarConfig}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <Campo
+                  etiqueta="Cantidad de Preguntas Aleatorias por Examen"
+                  ayuda="Si defines un límite (ej. 20), el sistema extraerá 20 preguntas al azar del banco para cada estudiante, garantizando un examen único e impidiendo que copien. Si lo dejas vacío, el estudiante responderá todas las preguntas del banco."
+                >
+                  <input
+                    type="number"
+                    min="1"
+                    max={metaPaginacion.total > 0 ? metaPaginacion.total : 500}
+                    className="campo__control"
+                    placeholder="Ej. 20 (Dejar vacío para todas las del banco)"
+                    value={formConfig.limite_preguntas}
+                    onChange={(e) => setFormConfig({ ...formConfig, limite_preguntas: e.target.value })}
+                  />
+                </Campo>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '0.65rem',
+                  borderTop: '1px solid var(--borde)',
+                  paddingTop: '1rem',
+                }}
+              >
+                <button
+                  type="button"
+                  className="boton boton--secundario"
+                  onClick={() => setMostrarModalConfig(false)}
+                  disabled={guardandoConfig}
+                >
+                  Cancelar
+                </button>
+
+                <button type="submit" className="boton boton--primario" disabled={guardandoConfig}>
+                  {guardandoConfig ? 'Guardando...' : 'Guardar Configuración'}
                 </button>
               </div>
             </form>
