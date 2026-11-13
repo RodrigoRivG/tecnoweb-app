@@ -4,7 +4,6 @@ import GraficoPerfilPsicologico from '../componentes/GraficoPerfilPsicologico.js
 import GraficoPerfilEmocional from '../componentes/GraficoPerfilEmocional.jsx'
 import GraficoPerfilLectura from '../componentes/GraficoPerfilLectura.jsx'
 import GraficoPerfilPurdue from '../componentes/GraficoPerfilPurdue.jsx'
-import GraficoPerfilHerramientas from '../componentes/GraficoPerfilHerramientas.jsx'
 import GraficoPerfilHabilidadesBlandas from '../componentes/GraficoPerfilHabilidadesBlandas.jsx'
 import {
   finalizarEvaluacion,
@@ -179,7 +178,6 @@ export default function RendirTest() {
   const esTestPersonalidad = codigoPrueba === 'TEST_PERSONALIDAD'
   const esTestLectura = codigoPrueba === 'TEST_LECTURA_COMPRENSIVA'
   const esTestPurdue = codigoPrueba === 'TEST_PURDUE_NO_VERBAL'
-  const esTestHerramientas = codigoPrueba === 'TEST_HERRAMIENTAS'
   const esTestHabilidadesBlandas = codigoPrueba === 'TEST_HABILIDADES_BLANDAS'
   const esLikert = esTestEmocional || esTestHabilidadesBlandas
 
@@ -343,11 +341,6 @@ export default function RendirTest() {
             <GraficoPerfilPurdue diagnostico={resultadoFinal.diagnostico_purdue} />
           )}
 
-          {/* Tarjeta de Diagnóstico de Reconocimiento de Herramientas si corresponde */}
-          {resultadoFinal.diagnostico_herramientas && (
-            <GraficoPerfilHerramientas diagnostico={resultadoFinal.diagnostico_herramientas} />
-          )}
-
           {/* Tarjeta de Diagnóstico de Habilidades Blandas si corresponde */}
           {resultadoFinal.diagnostico_habilidades_blandas && (
             <GraficoPerfilHabilidadesBlandas diagnostico={resultadoFinal.diagnostico_habilidades_blandas} />
@@ -463,11 +456,7 @@ export default function RendirTest() {
 
           <div className="aviso aviso--advertencia" style={{ marginBottom: '2rem' }}>
             <p>
-              {esTestHerramientas ? (
-                <>
-                  <strong>Instrucciones para Reconocimiento de Herramientas:</strong> En cada una de las 31 preguntas se describe una tarea técnica u operación de taller/obra. Consulta la lámina oficial de herramientas de referencia y selecciona cuál es la herramienta o pieza adecuada para realizar el trabajo. Tienes 20 minutos para completar la prueba.
-                </>
-              ) : esTestPurdue ? (
+              {esTestPurdue ? (
                 <>
                   <strong>Instrucciones para el Test No Verbal de Purdue:</strong> En cada una de las 48 series se presentan 5 dibujos. Cuatro de ellos guardan una característica lógica común y uno es diferente. Tu tarea consiste en identificar la figura diferente y marcar la opción correspondiente (A, B, C, D o E). Tienes 25 minutos para completar la prueba.
                 </>
