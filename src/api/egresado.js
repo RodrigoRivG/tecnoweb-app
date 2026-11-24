@@ -112,6 +112,13 @@ export async function obtenerResultadoFinal(postulacionId) {
   return (await pedir(`/postulaciones/${postulacionId}/resultado-final`)).data
 }
 
+/**
+ * Módulos de prueba del postulante, cada uno con su estado y su reloj.
+ */
+export async function obtenerModulosPrueba(postulacionId) {
+  return (await pedir(`/egresado/postulaciones/${postulacionId}/pruebas`)).data
+}
+
 
 
 

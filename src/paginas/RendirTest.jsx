@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import GraficoPerfilPsicologico from '../componentes/GraficoPerfilPsicologico.jsx'
 import GraficoPerfilEmocional from '../componentes/GraficoPerfilEmocional.jsx'
 import GraficoPerfilLectura from '../componentes/GraficoPerfilLectura.jsx'
@@ -23,10 +23,13 @@ function formatearTiempo(segundos) {
 
 export default function RendirTest() {
   const { id } = useParams()
+  const [parametros] = useSearchParams()
   const navigate = useNavigate()
+  const cierrePedido = useRef(false)
+  const vencimientoPedido = useRef(null)
 
-  // Selección de prueba dentro de la etapa
-  const [procesoPruebaId, setProcesoPruebaId] = useState(null)
+  const desdeUrl = parametros.get('proceso_prueba_id')
+  const [procesoPruebaId, setProcesoPruebaId] = useState(desdeUrl ? Number(desdeUrl) : null)
 
   // 1. Consultar estado general de la evaluación
   const consultarEvaluacionCallback = useCallback(
@@ -44,10 +47,10 @@ export default function RendirTest() {
   // Estados locales para nuevo intento o finalización reciente
   const [intentoIniciado, setIntentoIniciado] = useState(null)
   const [iniciando, setIniciando] = useState(false)
-  const [indiceActual, setIndiceActual] = useState(0)
   const [respuestasManuales, setRespuestasManuales] = useState({})
   const [mostrarModalFinalizar, setMostrarModalFinalizar] = useState(false)
   const [finalizando, setFinalizando] = useState(false)
+  const [guardando, setGuardando] = useState(false)
   const [resultadoReciente, setResultadoReciente] = useState(null)
   const [errorAccion, setErrorAccion] = useState(null)
 
@@ -60,7 +63,7 @@ export default function RendirTest() {
     (intId) => (intId && !resultadoFinal ? obtenerPreguntasIntento(intId) : Promise.resolve(null)),
     [resultadoFinal]
   )
-  const { datos: datosPreguntas, cargando: cargandoPreguntas, error: errorPreguntas } = useConsulta(
+  const { datos: datosPreguntas, cargando: cargandoPreguntas, error: errorPreguntas, reintentar: recargarPreguntas } = useConsulta(
     consultarPreguntasCallback,
     intentoId
   )
@@ -78,25 +81,28 @@ export default function RendirTest() {
     return { ...mapa, ...respuestasManuales }
   }, [preguntas, respuestasManuales])
 
-  // Temporizador regresivo (tiempo restante derivado)
-  const segundosIniciales =
-    datosPreguntas?.intento?.segundos_restantes ??
-    evaluacion?.intento_activo?.segundos_restantes ??
-    null
+  const segundosServidor = datosPreguntas?.intento?.segundos_restantes ?? null
+  const preguntaEnCurso = datosPreguntas?.preguntas?.[0]?.id ?? null
+  const firmaReloj = `${preguntaEnCurso ?? ''}:${segundosServidor ?? ''}`
+  const [firmaVista, setFirmaVista] = useState(firmaReloj)
   const [segundosTranscurridos, setSegundosTranscurridos] = useState(0)
+  if (firmaReloj !== firmaVista) {
+    setFirmaVista(firmaReloj)
+    setSegundosTranscurridos(0)
+  }
 
   useEffect(() => {
-    if (segundosIniciales === null || resultadoFinal) return
+    if (segundosServidor === null || resultadoFinal) return undefined
 
     const timer = setInterval(() => {
       setSegundosTranscurridos((prev) => prev + 1)
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [segundosIniciales, resultadoFinal])
+  }, [segundosServidor, preguntaEnCurso, resultadoFinal])
 
   const tiempoRestante =
-    segundosIniciales !== null ? Math.max(0, segundosIniciales - segundosTranscurridos) : null
+    segundosServidor !== null ? Math.max(0, segundosServidor - segundosTranscurridos) : null
 
   // Comenzar intento
   const handleComenzar = async () => {
@@ -114,14 +120,18 @@ export default function RendirTest() {
 
   // Marcar una respuesta
   const handleSeleccionarOpcion = async (preguntaId, opcionId) => {
-    if (finalizando || resultadoFinal) return
+    if (finalizando || resultadoFinal || guardando) return
 
-    setRespuestasManuales((prev) => ({ ...prev, [preguntaId]: opcionId }))
+    setGuardando(true)
+    setErrorAccion(null)
 
     try {
       await responderPregunta(intentoId, preguntaId, opcionId)
+      recargarPreguntas()
+      setGuardando(false)
     } catch (err) {
-      setErrorAccion(err.message || 'No se pudo autoguardar tu respuesta. Verifica tu conexión.')
+      setGuardando(false)
+      setErrorAccion(err.message || 'No se pudo guardar tu respuesta. Verifica tu conexión.')
     }
   }
 
@@ -149,17 +159,45 @@ export default function RendirTest() {
     setProcesoPruebaId(ppId)
     setIntentoIniciado(null)
     setResultadoReciente(null)
-    setIndiceActual(0)
     setRespuestasManuales({})
     setErrorAccion(null)
   }
 
   // Progreso general
-  const totalPreguntas = preguntas.length
-  const totalRespondidas = Object.keys(respuestas).length
+  const progreso = datosPreguntas?.progreso
+  const totalPreguntas = progreso?.total ?? preguntas.length
+  const totalRespondidas = progreso?.respondidas ?? Object.keys(respuestas).length
   const porcentajeProgreso =
     totalPreguntas > 0 ? Math.round((totalRespondidas / totalPreguntas) * 100) : 0
-  const preguntaActual = preguntas[indiceActual] ?? null
+  const preguntaActual = preguntas[0] ?? null
+  const numeroVisible = Math.min(totalPreguntas || 1, totalRespondidas + 1)
+
+  useEffect(() => {
+    if (tiempoRestante !== 0 || !preguntaActual || resultadoFinal) return
+    if (vencimientoPedido.current === preguntaActual.id) return
+    vencimientoPedido.current = preguntaActual.id
+    recargarPreguntas()
+  }, [tiempoRestante, preguntaActual, resultadoFinal, recargarPreguntas])
+
+  useEffect(() => {
+    if (cierrePedido.current || resultadoFinal || !intentoId) return
+
+    const completo = totalPreguntas > 0 && totalRespondidas >= totalPreguntas && !preguntaActual
+    const cerradoEnServidor = datosPreguntas?.cerrado_por_tiempo
+
+    if (!completo && !cerradoEnServidor) return
+
+    cierrePedido.current = true
+    finalizarEvaluacion(intentoId)
+      .then((res) => {
+        setResultadoReciente(res)
+        reintentar()
+      })
+      .catch((err) => {
+        cierrePedido.current = false
+        setErrorAccion(err.message || 'No se pudo cerrar la evaluación.')
+      })
+  }, [totalPreguntas, totalRespondidas, preguntaActual, datosPreguntas, intentoId, resultadoFinal, reintentar])
 
   // Siguiente prueba pendiente en esta misma etapa (si existe)
   const siguientePruebaPendiente = useMemo(() => {
@@ -173,9 +211,9 @@ export default function RendirTest() {
 
   // Tipos de prueba
   const codigoPrueba = evaluacion?.prueba?.codigo
-  const esTestInteligencia = codigoPrueba === 'TEST_INTELIGENCIA'
-  const esTestEmocional = codigoPrueba === 'TEST_INTELIGENCIA_EMOCIONAL'
-  const esTestPersonalidad = codigoPrueba === 'TEST_PERSONALIDAD'
+  const esTestInteligencia = codigoPrueba === 'ES_USTED_MUY_HABIL'
+  const esTestEmocional = codigoPrueba === 'TMMS_24'
+  const esTestPersonalidad = codigoPrueba === '16PF_FORMA_A' || codigoPrueba === '16PF_FORMA_B'
   const esTestLectura = codigoPrueba === 'TEST_LECTURA_COMPRENSIVA'
   const esTestPurdue = codigoPrueba === 'TEST_PURDUE_NO_VERBAL'
   const esTestHabilidadesBlandas = codigoPrueba === 'TEST_HABILIDADES_BLANDAS'
@@ -441,9 +479,9 @@ export default function RendirTest() {
               </div>
             </div>
             <div className="tarjeta" style={{ background: 'var(--superficie-destacada)' }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Tiempo Límite</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Tiempo por pregunta</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                {Math.round((evaluacion?.configuracion?.tiempo_maximo_seg || 1200) / 60)} minutos
+                {evaluacion?.configuracion?.tiempo_pregunta_seg ?? 60} segundos
               </div>
             </div>
             <div className="tarjeta" style={{ background: 'var(--superficie-destacada)' }}>
@@ -458,21 +496,21 @@ export default function RendirTest() {
             <p>
               {esTestPurdue ? (
                 <>
-                  <strong>Instrucciones para el Test No Verbal de Purdue:</strong> En cada una de las 48 series se presentan 5 dibujos. Cuatro de ellos guardan una característica lógica común y uno es diferente. Tu tarea consiste en identificar la figura diferente y marcar la opción correspondiente (A, B, C, D o E). Tienes 25 minutos para completar la prueba.
+                  <strong>Instrucciones para el Test No Verbal de Purdue:</strong> En cada una de las 48 series se presentan 5 dibujos. Cuatro de ellos guardan una característica lógica común y uno es diferente. Tu tarea consiste en identificar la figura diferente y marcar la opción correspondiente (A, B, C, D o E). Cada pregunta tiene su propio tiempo.
                 </>
               ) : esTestLectura ? (
                 <>
-                  <strong>Instrucciones para Habilidades y Aptitudes Específicas:</strong> Lee con detenimiento cada pasaje y responde a la pregunta de razonamiento analítico seleccionando la alternativa más precisa. Tienes 20 minutos para completar la prueba.
+                  <strong>Instrucciones para Habilidades y Aptitudes Específicas:</strong> Lee con detenimiento cada pasaje y responde a la pregunta de razonamiento analítico seleccionando la alternativa más precisa. Cada pregunta tiene su propio tiempo.
                 </>
               ) : esTestInteligencia ? (
                 <>
-                  <strong>Instrucciones:</strong> Analiza cada matriz lógica de 3x3 y selecciona cuál de los 8 mosaicos completa la secuencia geométrica correctamente. Tienes 30 minutos.
+                  <strong>Instrucciones:</strong> Analiza cada matriz lógica de 3x3 y selecciona cuál de los 8 mosaicos completa la secuencia geométrica correctamente. Cada pregunta tiene su propio tiempo.
                 </>
               ) : (
                 <>
                   <strong>Recomendaciones:</strong> Responde con espontaneidad y sinceridad según tus
                   preferencias y hábitos personales. No hay respuestas correctas o incorrectas. Una vez
-                  iniciado, deberás completar las preguntas antes de que expire el tiempo.
+                  iniciado, deberás responder cada pregunta dentro de su tiempo. Si llega a cero, pasa a la siguiente.
                 </>
               )}
             </p>
@@ -512,17 +550,15 @@ export default function RendirTest() {
             {evaluacion?.prueba?.nombre || 'Test de Evaluación'}
           </h2>
           <span style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>
-            Pregunta {indiceActual + 1} de {totalPreguntas} ({porcentajeProgreso}% respondido)
+            Pregunta {numeroVisible} de {totalPreguntas} ({porcentajeProgreso}% respondido)
           </span>
         </div>
 
         {tiempoRestante !== null && (
           <div
-            className={`evaluacion-reloj ${
-              tiempoRestante < 300 ? 'evaluacion-reloj--alerta' : ''
-            }`}
+            className={`evaluacion-reloj ${tiempoRestante <= 10 ? 'evaluacion-reloj--alerta' : ''}`}
           >
-            <span>⏱️</span>
+            <span>Esta pregunta</span>
             <span>{formatearTiempo(tiempoRestante)}</span>
           </div>
         )}
@@ -707,56 +743,11 @@ export default function RendirTest() {
 
           {/* Botones de Navegación */}
           <div className="evaluacion-acciones" style={{ marginTop: '2rem' }}>
-            <button
-              type="button"
-              className="boton boton--secundario"
-              disabled={indiceActual === 0}
-              onClick={() => setIndiceActual((i) => Math.max(0, i - 1))}
-            >
-              ← Anterior
-            </button>
-
-            {indiceActual < totalPreguntas - 1 ? (
-              <button
-                type="button"
-                className="boton boton--primario"
-                onClick={() => setIndiceActual((i) => Math.min(totalPreguntas - 1, i + 1))}
-              >
-                Siguiente →
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="boton boton--primario"
-                onClick={() => setMostrarModalFinalizar(true)}
-                style={{ background: '#16a34a', borderColor: '#16a34a' }}
-              >
-                Entregar Evaluación ✓
-              </button>
-            )}
-          </div>
-
-          {/* Navegador de Preguntas (Grid rápido) */}
-          <div className="navegador-preguntas-rejilla">
-            {preguntas.map((p, idx) => {
-              const respondida = respuestas[p.id] !== undefined
-              const esActual = idx === indiceActual
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  title={`Ir a pregunta ${idx + 1} (${
-                    respondida ? 'Respondida' : 'Pendiente'
-                  })`}
-                  className={`boton-numero-pregunta ${
-                    respondida ? 'boton-numero-pregunta--respondida' : ''
-                  } ${esActual ? 'boton-numero-pregunta--actual' : ''}`}
-                  onClick={() => setIndiceActual(idx)}
-                >
-                  {idx + 1}
-                </button>
-              )
-            })}
+            <p style={{ margin: 0, color: 'var(--texto-suave)' }}>
+              {guardando
+                ? 'Guardando respuesta…'
+                : 'Al elegir una opción avanzas. Esa respuesta queda bloqueada.'}
+            </p>
           </div>
         </div>
       ) : null}

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Shield, UserCheck, Users } from 'lucide-react'
+import { Check, Plus, Shield, UserCheck, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import {
   actualizarPermisosRolAdmin,
+  crearRolAdmin,
   obtenerRolesPermisosAdmin,
 } from '../../api/admin.js'
 import { ErrorCarga, Esqueleto } from '../../componentes/Estado.jsx'
@@ -17,6 +18,15 @@ export default function RolesPermisos() {
   const [permisosOriginalesRol, setPermisosOriginalesRol] = useState(new Set())
   const [guardando, setGuardando] = useState(false)
   const [aviso, setAviso] = useState(null)
+  const [mostrarAlta, setMostrarAlta] = useState(false)
+  const [guardandoRol, setGuardandoRol] = useState(false)
+  const [formRol, setFormRol] = useState({
+    codigo: '',
+    nombre: '',
+    descripcion: '',
+    es_panel: true,
+    alcance_carrera: false,
+  })
 
   async function cargarRbac() {
     setCargando(true)
@@ -112,6 +122,32 @@ export default function RolesPermisos() {
     }
   }
 
+  async function crearRol(evento) {
+    evento.preventDefault()
+    setGuardandoRol(true)
+    setAviso(null)
+    try {
+      const creado = await crearRolAdmin({
+        codigo: formRol.codigo.trim().toUpperCase(),
+        nombre: formRol.nombre.trim(),
+        descripcion: formRol.descripcion.trim() || null,
+        es_panel: formRol.es_panel,
+        alcance_carrera: formRol.alcance_carrera,
+      })
+      setDatosRbac((prev) => (prev ? { ...prev, roles: [...prev.roles, creado] } : prev))
+      setRolSeleccionadoId(creado.id)
+      setPermisosRolSeleccionado(new Set())
+      setPermisosOriginalesRol(new Set())
+      setMostrarAlta(false)
+      setFormRol({ codigo: '', nombre: '', descripcion: '', es_panel: true, alcance_carrera: false })
+      setAviso({ tipo: 'exito', mensaje: 'Rol creado. Marca ahora los permisos que podrá usar.' })
+    } catch (err) {
+      setAviso({ tipo: 'error', mensaje: err.message || 'No se pudo crear el rol.' })
+    } finally {
+      setGuardandoRol(false)
+    }
+  }
+
   const permisosPorModulo = useMemo(() => {
     if (!datosRbac?.permisos) return {}
     const grupos = {}
@@ -149,7 +185,11 @@ export default function RolesPermisos() {
           </p>
         </div>
 
-        <div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button type="button" className="boton boton--primario" onClick={() => setMostrarAlta(true)}>
+            <Plus size={16} style={{ marginRight: '0.35rem', verticalAlign: 'middle' }} />
+            Nuevo Rol
+          </button>
           <Link to="/panel/usuarios" className="boton boton--secundario">
             <Users size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
             Gestionar Cuentas de Usuarios
@@ -162,6 +202,70 @@ export default function RolesPermisos() {
         <div className={`aviso aviso--${aviso.tipo}`} role="alert" style={{ marginBottom: '1.5rem' }}>
           <p>{aviso.mensaje}</p>
         </div>
+      )}
+
+      {mostrarAlta && (
+        <form className="tarjeta" onSubmit={crearRol} style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.1rem', marginTop: 0 }}>Nuevo rol</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+            <label>
+              Código
+              <input
+                className="campo__control"
+                required
+                maxLength={30}
+                placeholder="SECRETARIO"
+                value={formRol.codigo}
+                onChange={(e) => setFormRol({ ...formRol, codigo: e.target.value.toUpperCase() })}
+              />
+            </label>
+            <label>
+              Nombre
+              <input
+                className="campo__control"
+                required
+                maxLength={60}
+                value={formRol.nombre}
+                onChange={(e) => setFormRol({ ...formRol, nombre: e.target.value })}
+              />
+            </label>
+            <label>
+              Descripción
+              <input
+                className="campo__control"
+                maxLength={255}
+                value={formRol.descripcion}
+                onChange={(e) => setFormRol({ ...formRol, descripcion: e.target.value })}
+              />
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+            <label style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={formRol.es_panel}
+                onChange={(e) => setFormRol({ ...formRol, es_panel: e.target.checked })}
+              />
+              Rol de gestión interna (entra al panel)
+            </label>
+            <label style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={formRol.alcance_carrera}
+                onChange={(e) => setFormRol({ ...formRol, alcance_carrera: e.target.checked })}
+              />
+              Se limita por carrera
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+            <button type="submit" className="boton boton--primario" disabled={guardandoRol}>
+              {guardandoRol ? 'Creando…' : 'Crear rol'}
+            </button>
+            <button type="button" className="boton boton--secundario" onClick={() => setMostrarAlta(false)}>
+              Cancelar
+            </button>
+          </div>
+        </form>
       )}
 
       {cargando ? (
@@ -237,6 +341,8 @@ export default function RolesPermisos() {
                   </div>
                   <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--texto-suave)' }}>
                     {rolActual.descripcion || 'Sin descripción configurada.'}
+                    {rolActual.es_panel ? ' Entra al panel.' : ' No entra al panel.'}
+                    {rolActual.alcance_carrera ? ' Se puede limitar por carrera.' : ''}
                   </p>
                 </div>
 

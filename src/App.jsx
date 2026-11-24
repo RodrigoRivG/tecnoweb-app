@@ -9,12 +9,16 @@ import RendirTest from './paginas/RendirTest.jsx'
 import Carreras from './paginas/panel/Carreras.jsx'
 import Convocatorias from './paginas/panel/Convocatorias.jsx'
 import Facultades from './paginas/panel/Facultades.jsx'
-import PanelLayout from './paginas/panel/PanelLayout.jsx'
-import Preguntas from './paginas/panel/Preguntas.jsx'
+import PanelLayout, { InicioPanel } from './paginas/panel/PanelLayout.jsx'
+import BancoEvaluaciones from './paginas/panel/BancoEvaluaciones.jsx'
 import Postulaciones from './paginas/panel/Postulaciones.jsx'
 import Usuarios from './paginas/panel/Usuarios.jsx'
 import RolesPermisos from './paginas/panel/RolesPermisos.jsx'
 import Registro from './paginas/Registro.jsx'
+import RegistroEmpresa from './paginas/RegistroEmpresa.jsx'
+import PanelEmpresa from './paginas/PanelEmpresa.jsx'
+import InformeEmpresa from './paginas/InformeEmpresa.jsx'
+import SolicitudesEmpresa from './paginas/panel/SolicitudesEmpresa.jsx'
 import { SesionProvider } from './sesion/SesionContext.jsx'
 
 function TemaBienvenida() {
@@ -24,6 +28,7 @@ function TemaBienvenida() {
     const enClaro =
       ['/', '/iniciar-sesion', '/registro'].includes(pathname) ||
       pathname.startsWith('/panel') ||
+      pathname.startsWith('/empresa') ||
       pathname.startsWith('/postulaciones')
 
     document.documentElement.classList.toggle('tema-claro', enClaro)
@@ -54,16 +59,20 @@ export default function App() {
             <Route path="/" element={<Bienvenida />} />
             <Route path="/iniciar-sesion" element={<IniciarSesion />} />
             <Route path="/registro" element={<Registro />} />
+            <Route path="/empresa/registro" element={<RegistroEmpresa />} />
+            <Route path="/empresa" element={<PanelEmpresa />} />
+            <Route path="/empresa/informes/:id" element={<InformeEmpresa />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
             <Route path="/postulaciones/:id" element={<DetallePostulacion />} />
             <Route path="/postulaciones/:id/test" element={<RendirTest />} />
             <Route path="/panel" element={<PanelLayout />}>
-              <Route index element={<Navigate to="facultades" replace />} />
+              <Route index element={<InicioPanel />} />
               <Route path="facultades" element={<Facultades />} />
               <Route path="carreras" element={<Carreras />} />
               <Route path="convocatorias" element={<Convocatorias />} />
-              <Route path="preguntas" element={<Preguntas />} />
+              <Route path="preguntas" element={<BancoEvaluaciones />} />
               <Route path="postulaciones" element={<Postulaciones />} />
+              <Route path="solicitudes-empresa" element={<SolicitudesEmpresa />} />
               <Route path="postulaciones/:id" element={<DetallePostulacion />} />
               <Route path="usuarios" element={<Usuarios />} />
               <Route path="roles-permisos" element={<RolesPermisos />} />

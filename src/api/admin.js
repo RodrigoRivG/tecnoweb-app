@@ -33,7 +33,7 @@ export async function eliminarCarrera(id) {
 }
 
 export async function obtenerUsuariosAdmin(filtros) {
-  return (await pedir('/admin/usuarios', { parametros: filtros })).data
+  return pedir('/admin/usuarios', { parametros: filtros })
 }
 
 export async function crearUsuarioAdmin(datos) {
@@ -46,6 +46,10 @@ export async function actualizarUsuarioAdmin(id, datos) {
 
 export async function obtenerRolesPermisosAdmin() {
   return (await pedir('/admin/roles-permisos')).data
+}
+
+export async function crearRolAdmin(datos) {
+  return (await pedir('/admin/roles', { metodo: 'POST', cuerpo: datos })).data
 }
 
 export async function actualizarPermisosRolAdmin(rolId, permisosIds) {
@@ -78,6 +82,25 @@ export async function eliminarConvocatoriaAdmin(id) {
 // Banco de Preguntas y Pruebas Psicotécnicas
 export async function obtenerCatalogoPruebasAdmin() {
   return (await pedir('/admin/banco-preguntas/catalogo')).data
+}
+
+export async function obtenerJerarquiaBanco() {
+  return (await pedir('/admin/banco-preguntas/jerarquia')).data
+}
+
+export async function crearLibroAdmin(datos) {
+  return (await pedir('/admin/pruebas', { metodo: 'POST', cuerpo: datos })).data
+}
+
+export async function actualizarLibroAdmin(id, datos) {
+  return (await pedir(`/admin/pruebas/${id}`, { metodo: 'PATCH', cuerpo: datos })).data
+}
+
+export async function actualizarTiempoFamilia(familia, tiempoPreguntaSeg) {
+  return (await pedir(`/admin/familias/${familia}/tiempo`, {
+    metodo: 'PATCH',
+    cuerpo: { tiempo_pregunta_seg: tiempoPreguntaSeg },
+  })).data
 }
 
 export async function actualizarConfiguracionPruebaAdmin(pruebaId, datos) {
@@ -114,6 +137,17 @@ export async function actualizarPreguntaAdmin(id, datos) {
 
 export async function eliminarPreguntaAdmin(id) {
   return (await pedir(`/admin/preguntas/${id}`, { metodo: 'DELETE' }))
+}
+
+export async function obtenerPerfilIdeal(procesoId) {
+  return (await pedir(`/admin/procesos/${procesoId}/perfil-ideal`)).data
+}
+
+export async function actualizarPerfilIdeal(procesoId, datos) {
+  return (await pedir(`/admin/procesos/${procesoId}/perfil-ideal`, {
+    metodo: 'PUT',
+    cuerpo: datos,
+  })).data
 }
 
 

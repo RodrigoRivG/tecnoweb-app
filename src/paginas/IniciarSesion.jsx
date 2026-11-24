@@ -4,7 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { iniciarSesionEnApi } from '../api/auth.js'
 import Campo from '../componentes/Campo.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
-import { esEvaluador, inicioDe } from '../utilidades/roles.js'
+import { inicioDe, puedeEntrarAlPanel } from '../utilidades/roles.js'
 
 const VACIO = { correo: '', password: '' }
 
@@ -12,7 +12,7 @@ const VACIO = { correo: '', password: '' }
 function destinoPara(usuario, ruta) {
   const interna = typeof ruta === 'string' && ruta.startsWith('/') && !ruta.startsWith('//')
 
-  if (!interna || (ruta.startsWith('/panel') && !esEvaluador(usuario))) {
+  if (!interna || (ruta.startsWith('/panel') && !puedeEntrarAlPanel(usuario))) {
     return inicioDe(usuario)
   }
 

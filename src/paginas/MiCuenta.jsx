@@ -8,6 +8,48 @@ import { useConsulta } from '../utilidades/useConsulta.js'
 
 export default function MiCuenta() {
   const { usuario, cargando } = useSesion()
+
+  if (cargando) {
+    return <p className="contenedor seccion">Cargando tu cuenta…</p>
+  }
+
+  if (!usuario) {
+    return <Navigate to="/iniciar-sesion" replace state={{ desde: '/mi-cuenta' }} />
+  }
+
+  if (usuario.rol?.codigo === 'CANDIDATO_EXTERNO') {
+    return <CuentaCandidato />
+  }
+
+  return <CuentaEgresado />
+}
+
+function CuentaCandidato() {
+  const postulacionesConsulta = useConsulta(obtenerMisPostulaciones)
+
+  return (
+    <div className="contenedor seccion">
+      <h1 className="titulo-pagina">Tu evaluación</h1>
+      <p className="seccion__descripcion">Solo puedes rendir la convocatoria para la que fuiste invitado.</p>
+      {postulacionesConsulta.error && (
+        <ErrorCarga error={postulacionesConsulta.error} onReintentar={postulacionesConsulta.reintentar} />
+      )}
+      {postulacionesConsulta.cargando && !postulacionesConsulta.datos && <Esqueleto cantidad={1} />}
+      <div className="rejilla" style={{ marginTop: '1rem' }}>
+        {(postulacionesConsulta.datos ?? []).map((postulacion) => (
+          <article key={postulacion.id} className="tarjeta">
+            <h2>{postulacion.convocatoria?.nombre}</h2>
+            <p>{postulacion.convocatoria?.carrera}</p>
+            <Link to={`/postulaciones/${postulacion.id}`} className="boton">Rendir evaluaciones</Link>
+          </article>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CuentaEgresado() {
+  const { usuario, cargando } = useSesion()
   const { state } = useLocation()
 
   const [postulandoId, setPostulandoId] = useState(null)

@@ -1,45 +1,33 @@
-import { Briefcase, Building2, FileQuestion, FileText, GraduationCap, Shield, Users } from 'lucide-react'
+import { Briefcase, Building2, FileQuestion, FileText, GraduationCap, Landmark, Shield, Users } from 'lucide-react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { useSesion } from '../../sesion/SesionContext.jsx'
-import { esEvaluador } from '../../utilidades/roles.js'
+import { inicioDe, puedeEntrarAlPanel, primeraSeccionPanel, SECCIONES_PANEL, tienePermiso } from '../../utilidades/roles.js'
 
-const SECCIONES = [
-  {
-    ruta: '/panel/facultades',
-    titulo: 'Facultades',
-    icono: <Building2 size={20} aria-hidden="true" />,
-  },
-  {
-    ruta: '/panel/carreras',
-    titulo: 'Carreras',
-    icono: <GraduationCap size={20} aria-hidden="true" />,
-  },
-  {
-    ruta: '/panel/convocatorias',
-    titulo: 'Convocatorias',
-    icono: <Briefcase size={20} aria-hidden="true" />,
-  },
-  {
-    ruta: '/panel/preguntas',
-    titulo: 'Banco de Preguntas',
-    icono: <FileQuestion size={20} aria-hidden="true" />,
-  },
-  {
-    ruta: '/panel/postulaciones',
-    titulo: 'Postulaciones',
-    icono: <FileText size={20} aria-hidden="true" />,
-  },
-  {
-    ruta: '/panel/usuarios',
-    titulo: 'Usuarios',
-    icono: <Users size={20} aria-hidden="true" />,
-  },
-  {
-    ruta: '/panel/roles-permisos',
-    titulo: 'Roles y Permisos (RBAC)',
-    icono: <Shield size={20} aria-hidden="true" />,
-  },
-]
+const ICONOS = {
+  '/panel/facultades': <Building2 size={20} aria-hidden="true" />,
+  '/panel/carreras': <GraduationCap size={20} aria-hidden="true" />,
+  '/panel/convocatorias': <Briefcase size={20} aria-hidden="true" />,
+  '/panel/preguntas': <FileQuestion size={20} aria-hidden="true" />,
+  '/panel/solicitudes-empresa': <Landmark size={20} aria-hidden="true" />,
+  '/panel/postulaciones': <FileText size={20} aria-hidden="true" />,
+  '/panel/usuarios': <Users size={20} aria-hidden="true" />,
+  '/panel/roles-permisos': <Shield size={20} aria-hidden="true" />,
+}
+
+export function InicioPanel() {
+  const { usuario } = useSesion()
+  const destino = primeraSeccionPanel(usuario)
+
+  if (!destino) {
+    return (
+      <p className="seccion__descripcion">
+        Tu rol puede entrar al panel, pero todavía no tiene ninguna pantalla asignada.
+      </p>
+    )
+  }
+
+  return <Navigate to={destino.ruta} replace />
+}
 
 export default function PanelLayout() {
   const { usuario, cargando } = useSesion()
@@ -53,8 +41,17 @@ export default function PanelLayout() {
     return <Navigate to="/iniciar-sesion" replace state={{ desde: pathname }} />
   }
 
-  if (!esEvaluador(usuario)) {
-    return <Navigate to="/mi-cuenta" replace />
+  if (!puedeEntrarAlPanel(usuario)) {
+    return <Navigate to={inicioDe(usuario)} replace />
+  }
+
+  const secciones = SECCIONES_PANEL.filter((seccion) => tienePermiso(usuario, seccion.permiso))
+  const seccionActual = SECCIONES_PANEL.find(
+    (seccion) => pathname === seccion.ruta || pathname.startsWith(`${seccion.ruta}/`),
+  )
+
+  if (seccionActual && !tienePermiso(usuario, seccionActual.permiso)) {
+    return <Navigate to="/panel" replace />
   }
 
   return (
@@ -62,9 +59,9 @@ export default function PanelLayout() {
       <aside className="panel__lateral" aria-label="Administración">
         <p className="panel__lateral-titulo">Administración</p>
         <nav className="panel__menu">
-          {SECCIONES.map((seccion) => (
+          {secciones.map((seccion) => (
             <NavLink key={seccion.ruta} to={seccion.ruta} className="panel__enlace">
-              {seccion.icono}
+              {ICONOS[seccion.ruta]}
               <span>{seccion.titulo}</span>
             </NavLink>
           ))}

@@ -61,6 +61,10 @@ export async function obtenerRankingProceso(procesoId) {
 /**
  * Publica y adjudica las plazas para el proceso.
  */
+export async function obtenerInformePostulacion(postulacionId) {
+  return (await pedir(`/evaluador/postulaciones/${postulacionId}/informe`)).data
+}
+
 export async function adjudicarSeleccionProceso(procesoId, datos = {}) {
   return await pedir(`/evaluador/procesos/${procesoId}/adjudicar`, {
     metodo: 'POST',

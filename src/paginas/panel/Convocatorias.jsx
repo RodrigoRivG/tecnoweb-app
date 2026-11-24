@@ -20,6 +20,7 @@ import {
   obtenerFacultadesAdmin,
 } from '../../api/admin.js'
 import Campo from '../../componentes/Campo.jsx'
+import ModalPerfilIdeal from '../../componentes/ModalPerfilIdeal.jsx'
 import { ErrorCarga, Esqueleto } from '../../componentes/Estado.jsx'
 import { formatearFecha } from '../../utilidades/formato.js'
 
@@ -77,6 +78,7 @@ export default function Convocatorias() {
   const [erroresForm, setErroresForm] = useState({})
   const [aviso, setAviso] = useState(null)
   const [actualizandoId, setActualizandoId] = useState(null)
+  const [perfilAbierto, setPerfilAbierto] = useState(null)
 
   async function cargarConvocatorias() {
     setCargando(true)
@@ -516,6 +518,16 @@ export default function Convocatorias() {
                             type="button"
                             className="boton boton--secundario boton--chico"
                             disabled={ocupado}
+                            onClick={() => setPerfilAbierto(conv)}
+                            title="Definir perfil ideal"
+                          >
+                            Perfil
+                          </button>
+
+                          <button
+                            type="button"
+                            className="boton boton--secundario boton--chico"
+                            disabled={ocupado}
                             onClick={() => abrirEditar(conv)}
                             title="Editar convocatoria"
                           >
@@ -920,6 +932,14 @@ export default function Convocatorias() {
             </form>
           </div>
         </div>
+      )}
+
+      {perfilAbierto && (
+        <ModalPerfilIdeal
+          procesoId={perfilAbierto.proceso_id}
+          nombre={perfilAbierto.nombre}
+          alCerrar={() => setPerfilAbierto(null)}
+        />
       )}
     </div>
   )

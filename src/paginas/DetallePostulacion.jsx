@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router'
+import { Link, Navigate, useLocation, useParams } from 'react-router'
 import { descargarDocumentoPostulacion, obtenerDetallePostulacion, obtenerResultadoFinal, subirDocumentoPostulacion } from '../api/egresado.js'
 import { aprobarRequisitos } from '../api/evaluador.js'
 import { ErrorCarga, Esqueleto } from '../componentes/Estado.jsx'
 import ModalCuadroHonor from '../componentes/ModalCuadroHonor.jsx'
 import ModalEvaluacionCv from '../componentes/ModalEvaluacionCv.jsx'
+import InformeCandidato from '../componentes/InformeCandidato.jsx'
+import ModulosEvaluacion from '../componentes/ModulosEvaluacion.jsx'
 import ModalEvaluacionEntrevista from '../componentes/ModalEvaluacionEntrevista.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { formatearFecha, formatearTamano } from '../utilidades/formato.js'
 import { useConsulta } from '../utilidades/useConsulta.js'
+import { puedeEntrarAlPanel, tienePermiso } from '../utilidades/roles.js'
 
 export default function DetallePostulacion() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { pathname } = useLocation()
   const { usuario, cargando: cargandoSesion } = useSesion()
 
@@ -27,7 +29,12 @@ export default function DetallePostulacion() {
   const [aprobandoRequisitos, setAprobandoRequisitos] = useState(false)
 
   const consulta = useConsulta(obtenerDetallePostulacion, id)
-  const esEvaluador = usuario?.rol?.codigo === 'ADMIN' || usuario?.rol?.codigo === 'AYUDANTE'
+  const enPanel = puedeEntrarAlPanel(usuario)
+  const puedeRequisitos = tienePermiso(usuario, 'requisitos.aprobar')
+  const puedeCv = tienePermiso(usuario, 'cv.calificar')
+  const puedeEntrevista = tienePermiso(usuario, 'entrevista.calificar')
+  const puedeInforme = tienePermiso(usuario, 'postulaciones.ver')
+  const puedeRanking = tienePermiso(usuario, 'ranking.adjudicar')
   const esEnPanel = pathname.startsWith('/panel')
   const etapaSeleccionEstado = consulta.datos?.etapas?.find((e) => e.codigo === 'SELECCION')?.estado
 
@@ -48,7 +55,7 @@ export default function DetallePostulacion() {
   }
 
   // Si el usuario es administrador/evaluador y abrió /postulaciones/:id, redirigir a /panel/postulaciones/:id
-  if (esEvaluador && !esEnPanel) {
+  if (enPanel && !esEnPanel) {
     return <Navigate to={`/panel/postulaciones/${id}`} replace />
   }
 
@@ -56,8 +63,8 @@ export default function DetallePostulacion() {
     return (
       <div className={esEnPanel ? '' : 'contenedor seccion'}>
         <p>
-          <Link to={esEvaluador ? '/panel/postulaciones' : '/mi-cuenta'}>
-            {esEvaluador ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'}
+          <Link to={enPanel ? '/panel/postulaciones' : '/mi-cuenta'}>
+            {enPanel ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'}
           </Link>
         </p>
         <ErrorCarga error={consulta.error} onReintentar={consulta.reintentar} />
@@ -69,8 +76,8 @@ export default function DetallePostulacion() {
     return (
       <div className={esEnPanel ? '' : 'contenedor seccion'}>
         <p>
-          <Link to={esEvaluador ? '/panel/postulaciones' : '/mi-cuenta'}>
-            {esEvaluador ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'}
+          <Link to={enPanel ? '/panel/postulaciones' : '/mi-cuenta'}>
+            {enPanel ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'}
           </Link>
         </p>
         <Esqueleto cantidad={3} />
@@ -81,8 +88,6 @@ export default function DetallePostulacion() {
   const postulacion = consulta.datos
   const convocatoria = postulacion.convocatoria
   const etapaRequisitos = postulacion.etapas?.find((e) => e.codigo === 'REQUISITOS')
-  const etapaPsicologica = postulacion.etapas?.find((e) => e.codigo === 'EVALUACION_PSICOLOGICA')
-  const etapaHabilidadesBlandas = postulacion.etapas?.find((e) => e.codigo === 'HABILIDADES_BLANDAS')
   const etapaAnalisisCv = postulacion.etapas?.find((e) => e.codigo === 'ANALISIS_CV')
   const etapaEntrevista = postulacion.etapas?.find((e) => e.codigo === 'ENTREVISTA')
   const etapaSeleccion = postulacion.etapas?.find((e) => e.codigo === 'SELECCION')
@@ -146,8 +151,8 @@ export default function DetallePostulacion() {
   return (
     <div className={esEnPanel ? '' : 'contenedor seccion'}>
       <nav aria-label="Navegación secundaria" style={{ marginBottom: '1.25rem' }}>
-        <Link to={esEvaluador ? '/panel/postulaciones' : '/mi-cuenta'} className="enlace-accion" style={{ fontSize: '0.95rem' }}>
-          {esEvaluador ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'}
+        <Link to={enPanel ? '/panel/postulaciones' : '/mi-cuenta'} className="enlace-accion" style={{ fontSize: '0.95rem' }}>
+          {enPanel ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'}
         </Link>
       </nav>
 
@@ -241,6 +246,7 @@ export default function DetallePostulacion() {
       </section>
 
       {/* Bloque 2: Paso 3 - Requisitos Documentales */}
+      {postulacion.requisitos?.length > 0 && (
       <section aria-labelledby="titulo-requisitos" style={{ marginTop: '2.5rem' }}>
         <h2 id="titulo-requisitos" style={{ fontSize: '1.3rem' }}>
           Paso 3: Carga de Requisitos Documentales
@@ -272,7 +278,7 @@ export default function DetallePostulacion() {
           </div>
         )}
 
-        {esEvaluador && !requisitosAprobados && postulacion.requisitos_completos && (
+        {puedeRequisitos && !requisitosAprobados && postulacion.requisitos_completos && (
           <div
             style={{
               marginTop: '1rem',
@@ -358,7 +364,7 @@ export default function DetallePostulacion() {
                       >
                         Descargar
                       </button>
-                      {!requisitosAprobados && (
+                      {!requisitosAprobados && !enPanel && (
                         <button
                           type="button"
                           className="boton boton--secundario boton--chico"
@@ -372,7 +378,7 @@ export default function DetallePostulacion() {
                 )}
 
                 {/* Si no tiene documento o eligió reemplazar */}
-                {(!tieneDocumento || estaReemplazando) && (
+                {(!tieneDocumento || estaReemplazando) && !enPanel && (
                   <div className="requisito-card__subida-form">
                     <input
                       type="file"
@@ -406,96 +412,9 @@ export default function DetallePostulacion() {
           })}
         </ul>
       </section>
-
-      {/* Bloque 3: Paso 4 - Tests Psicotécnicos */}
-      {etapaPsicologica?.estado === 'PENDIENTE' && (
-        <section aria-labelledby="titulo-paso4" className="tarjeta" style={{ marginTop: '2.5rem', borderLeft: '4px solid var(--primario)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <span className="insignia insignia--exito" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>✓ Etapa Habilitada</span>
-              <h2 id="titulo-paso4" style={{ fontSize: '1.25rem', margin: '0.2rem 0' }}>Paso 4: Evaluación Psicológica</h2>
-              <p className="seccion__descripcion" style={{ margin: 0 }}>
-                Tus requisitos fueron aprobados. La siguiente etapa consiste en rendir la evaluación psicológica en línea (16PF).
-              </p>
-            </div>
-            <button
-              type="button"
-              className="boton boton--primario"
-              onClick={() => navigate(`/postulaciones/${postulacion.id}/test`)}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              Rendir Evaluación Psicológica →
-            </button>
-          </div>
-        </section>
       )}
 
-      {etapaPsicologica?.estado === 'APROBADA' && (
-        <section aria-labelledby="titulo-paso4-aprobado" className="tarjeta" style={{ marginTop: '2.5rem', borderLeft: '4px solid #16a34a' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <span className="insignia insignia--exito" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>✓ Evaluación Aprobada</span>
-              <h2 id="titulo-paso4-aprobado" style={{ fontSize: '1.25rem', margin: '0.2rem 0' }}>Paso 4: Evaluación Psicológica (Completada)</h2>
-              <p className="seccion__descripcion" style={{ margin: 0 }}>
-                Has completado satisfactoriamente las 6 pruebas psicométricas y de aptitud. Tu postulación ha avanzado a las siguientes etapas.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="boton boton--secundario"
-              onClick={() => navigate(`/postulaciones/${postulacion.id}/test`)}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              Ver Resumen de Resultados
-            </button>
-          </div>
-        </section>
-      )}
-
-      {/* Bloque 4: Paso 5 - Habilidades Blandas */}
-      {etapaHabilidadesBlandas?.estado === 'PENDIENTE' && (
-        <section aria-labelledby="titulo-paso5" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid var(--primario)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <span className="insignia insignia--exito" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>✓ Etapa Habilitada</span>
-              <h2 id="titulo-paso5" style={{ fontSize: '1.25rem', margin: '0.2rem 0' }}>Paso 5: Medición de Habilidades Blandas</h2>
-              <p className="seccion__descripcion" style={{ margin: 0 }}>
-                Evalúa tus competencias interpersonales: comunicación asertiva, trabajo en equipo, resolución de conflictos, adaptabilidad y liderazgo.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="boton boton--primario"
-              onClick={() => navigate(`/postulaciones/${postulacion.id}/test`)}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              Rendir Test de Habilidades Blandas →
-            </button>
-          </div>
-        </section>
-      )}
-
-      {etapaHabilidadesBlandas?.estado === 'APROBADA' && (
-        <section aria-labelledby="titulo-paso5-aprobado" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #16a34a' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <span className="insignia insignia--exito" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>✓ Habilidades Blandas Aprobadas</span>
-              <h2 id="titulo-paso5-aprobado" style={{ fontSize: '1.25rem', margin: '0.2rem 0' }}>Paso 5: Medición de Habilidades Blandas (Completada)</h2>
-              <p className="seccion__descripcion" style={{ margin: 0 }}>
-                Has completado la evaluación de habilidades blandas con calificación sobresaliente.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="boton boton--secundario"
-              onClick={() => navigate(`/postulaciones/${postulacion.id}/test`)}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              Ver Perfil de Competencias
-            </button>
-          </div>
-        </section>
-      )}
+      {!enPanel && <ModulosEvaluacion postulacionId={postulacion.id} />}
 
       {/* Bloque 5: Paso 6 - Análisis de CV */}
       {etapaAnalisisCv?.estado === 'PENDIENTE' && (
@@ -508,7 +427,7 @@ export default function DetallePostulacion() {
                 Tu currículum vitae y certificados están siendo revisados y calificados por la comisión evaluadora mediante la rúbrica institucional (Formación, Experiencia, Habilidades y Presentación).
               </p>
             </div>
-            {esEvaluador && (
+            {puedeCv && (
               <button
                 type="button"
                 className="boton boton--primario"
@@ -532,7 +451,7 @@ export default function DetallePostulacion() {
                 El expediente y currículum han sido evaluados y aprobados con la rúbrica institucional.
               </p>
             </div>
-            {esEvaluador && (
+            {puedeCv && (
               <button
                 type="button"
                 className="boton boton--secundario"
@@ -557,7 +476,7 @@ export default function DetallePostulacion() {
                 El postulante ha sido convocado ante el tribunal de entrevistas para evaluar su dominio técnico, comunicación, motivación y resolución de casos.
               </p>
             </div>
-            {esEvaluador && (
+            {puedeEntrevista && (
               <button
                 type="button"
                 className="boton boton--primario"
@@ -581,7 +500,7 @@ export default function DetallePostulacion() {
                 La entrevista personal ha sido evaluada y aprobada satisfactoriamente con la rúbrica institucional.
               </p>
             </div>
-            {esEvaluador && (
+            {puedeEntrevista && (
               <button
                 type="button"
                 className="boton boton--secundario"
@@ -595,6 +514,8 @@ export default function DetallePostulacion() {
         </section>
       )}
 
+      {puedeInforme && <InformeCandidato postulacionId={id} />}
+
       {/* Bloque 7: Paso 8 - Selección */}
       {etapaSeleccion?.estado === 'PENDIENTE' && (
         <section aria-labelledby="titulo-paso8-pendiente" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #eab308' }}>
@@ -606,14 +527,16 @@ export default function DetallePostulacion() {
                 Se están consolidando las ponderaciones de todas las etapas para conformar el Cuadro de Honor y adjudicar las plazas institucionales.
               </p>
             </div>
-            <button
-              type="button"
-              className="boton boton--primario"
-              onClick={() => setMostrarModalRanking(true)}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              🏆 Ver Cuadro de Honor y Ranking
-            </button>
+            {(puedeRanking || !enPanel) && (
+              <button
+                type="button"
+                className="boton boton--primario"
+                onClick={() => setMostrarModalRanking(true)}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                🏆 Ver Cuadro de Honor y Ranking
+              </button>
+            )}
           </div>
         </section>
       )}
@@ -644,14 +567,16 @@ export default function DetallePostulacion() {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              className="boton boton--primario"
-              onClick={() => setMostrarModalRanking(true)}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              🏆 Ver Cuadro de Honor Oficial
-            </button>
+            {(puedeRanking || !enPanel) && (
+              <button
+                type="button"
+                className="boton boton--primario"
+                onClick={() => setMostrarModalRanking(true)}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                🏆 Ver Cuadro de Honor Oficial
+              </button>
+            )}
           </div>
         </section>
       )}
@@ -685,7 +610,7 @@ export default function DetallePostulacion() {
               obtenerResultadoFinal(id).then((res) => setResultadoFinal(res)).catch(() => {})
             }
           }}
-          esEvaluador={esEvaluador}
+          esEvaluador={puedeRanking}
         />
       )}
     </div>

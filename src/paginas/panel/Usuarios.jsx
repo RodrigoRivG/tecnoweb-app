@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Lock,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -11,22 +12,25 @@ import { Link } from 'react-router'
 import {
   actualizarUsuarioAdmin,
   crearUsuarioAdmin,
-  obtenerRolesPermisosAdmin,
   obtenerUsuariosAdmin,
 } from '../../api/admin.js'
 import Campo from '../../componentes/Campo.jsx'
 import { ErrorCarga, Esqueleto } from '../../componentes/Estado.jsx'
+import { useSesion } from '../../sesion/SesionContext.jsx'
 import { formatearFecha } from '../../utilidades/formato.js'
+import { tienePermiso } from '../../utilidades/roles.js'
 
 const FORMULARIO_USUARIO_INICIAL = {
   nombres: '',
-  primer_apellido: '',
-  segundo_apellido: '',
-  ci: '',
+  apellido_paterno: '',
+  apellido_materno: '',
+  ci_numero: '',
+  fecha_nacimiento: '',
   telefono: '',
   correo: '',
   password: '',
-  rol_id: '2', // Ayudante por defecto
+  rol_id: '',
+  carrera_ids: [],
 }
 
 function claseEstado(estado) {
@@ -42,6 +46,9 @@ function claseRol(codigo) {
 }
 
 export default function Usuarios() {
+  const { usuario: sesion } = useSesion()
+  const puedeGestionar = tienePermiso(sesion, 'usuarios.gestionar')
+  const puedeVerRoles = tienePermiso(sesion, 'permisos.gestionar')
   const [usuarios, setUsuarios] = useState([])
   const [cargandoUsuarios, setCargandoUsuarios] = useState(true)
   const [errorUsuarios, setErrorUsuarios] = useState(null)
@@ -56,6 +63,8 @@ export default function Usuarios() {
   const [aviso, setAviso] = useState(null)
 
   const [rolesCatalogo, setRolesCatalogo] = useState([])
+  const [carrerasCatalogo, setCarrerasCatalogo] = useState([])
+  const [editandoId, setEditandoId] = useState(null)
   const [actualizandoUsuarioId, setActualizandoUsuarioId] = useState(null)
 
   async function cargarUsuarios() {
@@ -63,7 +72,9 @@ export default function Usuarios() {
     setErrorUsuarios(null)
     try {
       const data = await obtenerUsuariosAdmin()
-      setUsuarios(data)
+      setUsuarios(data.data ?? [])
+      setRolesCatalogo(data.roles ?? [])
+      setCarrerasCatalogo(data.carreras ?? [])
     } catch (err) {
       setErrorUsuarios(err.message || 'Error al cargar usuarios.')
     } finally {
@@ -77,7 +88,9 @@ export default function Usuarios() {
     obtenerUsuariosAdmin()
       .then((data) => {
         if (activo) {
-          setUsuarios(data)
+          setUsuarios(data.data ?? [])
+          setRolesCatalogo(data.roles ?? [])
+          setCarrerasCatalogo(data.carreras ?? [])
           setCargandoUsuarios(false)
         }
       })
@@ -87,14 +100,6 @@ export default function Usuarios() {
           setCargandoUsuarios(false)
         }
       })
-
-    obtenerRolesPermisosAdmin()
-      .then((data) => {
-        if (activo && data.roles) {
-          setRolesCatalogo(data.roles)
-        }
-      })
-      .catch(() => {})
 
     return () => {
       activo = false
@@ -131,26 +136,73 @@ export default function Usuarios() {
     }
   }
 
-  async function crearUsuario(e) {
+  function abrirAlta() {
+    const internos = rolesCatalogo.filter((rol) => rol.es_panel)
+    setEditandoId(null)
+    setFormUsuario({
+      ...FORMULARIO_USUARIO_INICIAL,
+      rol_id: internos[0] ? String(internos[0].id) : '',
+    })
+    setErroresFormUsuario({})
+    setMostrarModalUsuario(true)
+  }
+
+  function abrirEdicion(cuenta) {
+    setEditandoId(cuenta.id)
+    setFormUsuario({
+      nombres: cuenta.persona?.nombres ?? '',
+      apellido_paterno: cuenta.persona?.apellido_paterno ?? '',
+      apellido_materno: cuenta.persona?.apellido_materno ?? '',
+      ci_numero: cuenta.persona?.ci_numero ?? '',
+      fecha_nacimiento: cuenta.persona?.fecha_nacimiento ?? '',
+      telefono: cuenta.persona?.telefono ?? '',
+      correo: cuenta.correo ?? '',
+      password: '',
+      rol_id: cuenta.rol?.id ? String(cuenta.rol.id) : '',
+      carrera_ids: cuenta.carrera_ids ?? [],
+    })
+    setErroresFormUsuario({})
+    setMostrarModalUsuario(true)
+  }
+
+  async function guardarUsuario(e) {
     e.preventDefault()
     setGuardandoUsuario(true)
     setErroresFormUsuario({})
     setAviso(null)
 
+    const rol = rolesCatalogo.find((item) => String(item.id) === String(formUsuario.rol_id))
+    const cuerpo = {
+      ...formUsuario,
+      rol_id: parseInt(formUsuario.rol_id, 10),
+      apellido_materno: formUsuario.apellido_materno || null,
+      telefono: formUsuario.telefono || null,
+      carrera_ids: rol?.alcance_carrera ? formUsuario.carrera_ids.map((id) => parseInt(id, 10)) : [],
+    }
+
+    if (editandoId && !cuerpo.password) {
+      delete cuerpo.password
+    }
+
     try {
-      await crearUsuarioAdmin({
-        ...formUsuario,
-        rol_id: parseInt(formUsuario.rol_id, 10),
-      })
+      if (editandoId) {
+        await actualizarUsuarioAdmin(editandoId, cuerpo)
+      } else {
+        await crearUsuarioAdmin(cuerpo)
+      }
       setMostrarModalUsuario(false)
       setFormUsuario(FORMULARIO_USUARIO_INICIAL)
+      setEditandoId(null)
       await cargarUsuarios()
-      setAviso({ tipo: 'exito', mensaje: 'Usuario registrado correctamente en el sistema.' })
+      setAviso({
+        tipo: 'exito',
+        mensaje: editandoId ? 'Usuario actualizado correctamente.' : 'Usuario registrado correctamente en el sistema.',
+      })
     } catch (err) {
-      if (err.errors) {
-        setErroresFormUsuario(err.errors)
+      if (err.errores || err.errors) {
+        setErroresFormUsuario(err.errores ?? err.errors)
       } else {
-        setAviso({ tipo: 'error', mensaje: err.message || 'Error al registrar el usuario.' })
+        setAviso({ tipo: 'error', mensaje: err.message || 'Error al guardar el usuario.' })
       }
     } finally {
       setGuardandoUsuario(false)
@@ -188,22 +240,18 @@ export default function Usuarios() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Link to="/panel/roles-permisos" className="boton boton--secundario">
-            <Shield size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
-            Roles y Permisos (RBAC)
-          </Link>
-          <button
-            type="button"
-            className="boton boton--primario"
-            onClick={() => {
-              setFormUsuario(FORMULARIO_USUARIO_INICIAL)
-              setErroresFormUsuario({})
-              setMostrarModalUsuario(true)
-            }}
-          >
-            <Plus size={16} style={{ marginRight: '0.35rem', verticalAlign: 'middle' }} />
-            Nuevo Usuario Staff
-          </button>
+          {puedeVerRoles && (
+            <Link to="/panel/roles-permisos" className="boton boton--secundario">
+              <Shield size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
+              Roles y Permisos (RBAC)
+            </Link>
+          )}
+          {puedeGestionar && (
+            <button type="button" className="boton boton--primario" onClick={abrirAlta}>
+              <Plus size={16} style={{ marginRight: '0.35rem', verticalAlign: 'middle' }} />
+              Nuevo Usuario Staff
+            </button>
+          )}
         </div>
       </header>
 
@@ -256,9 +304,11 @@ export default function Usuarios() {
             onChange={(e) => setFiltroRol(e.target.value)}
           >
             <option value="">Todos los Roles</option>
-            <option value="ADMIN">Administrador</option>
-            <option value="AYUDANTE">Ayudante</option>
-            <option value="EGRESADO">Egresado</option>
+            {rolesCatalogo.map((rol) => (
+              <option key={rol.id} value={rol.codigo}>
+                {rol.nombre}
+              </option>
+            ))}
           </select>
 
           <select
@@ -343,7 +393,7 @@ export default function Usuarios() {
                               width: 'auto',
                             }}
                             value={u.rol?.id || ''}
-                            disabled={ocupado}
+                            disabled={ocupado || !puedeGestionar}
                             onChange={(e) => cambiarRolUsuario(u.id, e.target.value)}
                           >
                             {rolesCatalogo.map((r) => (
@@ -353,12 +403,24 @@ export default function Usuarios() {
                             ))}
                           </select>
 
+                          {puedeGestionar && (
+                            <button
+                              type="button"
+                              className="boton boton--secundario boton--chico"
+                              disabled={ocupado}
+                              onClick={() => abrirEdicion(u)}
+                            >
+                              <Pencil size={14} style={{ marginRight: '0.25rem', verticalAlign: 'middle' }} />
+                              Editar
+                            </button>
+                          )}
+
                           <button
                             type="button"
                             className={`boton boton--chico ${
                               u.estado === 'ACTIVO' ? 'boton--secundario' : 'boton--primario'
                             }`}
-                            disabled={ocupado}
+                            disabled={ocupado || !puedeGestionar}
                             onClick={() => alternarEstadoUsuario(u)}
                             title={u.estado === 'ACTIVO' ? 'Bloquear acceso' : 'Desbloquear acceso'}
                           >
@@ -413,7 +475,7 @@ export default function Usuarios() {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Registrar Usuario Staff</h2>
+              <h2 style={{ fontSize: '1.25rem', margin: 0 }}>{editandoId ? 'Editar usuario' : 'Registrar Usuario Staff'}</h2>
               <button
                 type="button"
                 className="boton boton--secundario boton--chico"
@@ -423,7 +485,7 @@ export default function Usuarios() {
               </button>
             </div>
 
-            <form onSubmit={crearUsuario}>
+            <form onSubmit={guardarUsuario}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <Campo etiqueta="Nombres *" error={erroresFormUsuario.nombres?.[0]}>
                   <input
@@ -435,40 +497,50 @@ export default function Usuarios() {
                   />
                 </Campo>
 
-                <Campo etiqueta="Primer Apellido *" error={erroresFormUsuario.primer_apellido?.[0]}>
+                <Campo etiqueta="Apellido paterno *" error={erroresFormUsuario.apellido_paterno?.[0]}>
                   <input
                     type="text"
                     required
                     className="campo__control"
-                    value={formUsuario.primer_apellido}
-                    onChange={(e) => setFormUsuario({ ...formUsuario, primer_apellido: e.target.value })}
+                    value={formUsuario.apellido_paterno}
+                    onChange={(e) => setFormUsuario({ ...formUsuario, apellido_paterno: e.target.value })}
                   />
                 </Campo>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem' }}>
-                <Campo etiqueta="Segundo Apellido" error={erroresFormUsuario.segundo_apellido?.[0]}>
+                <Campo etiqueta="Apellido materno" error={erroresFormUsuario.apellido_materno?.[0]}>
                   <input
                     type="text"
                     className="campo__control"
-                    value={formUsuario.segundo_apellido}
-                    onChange={(e) => setFormUsuario({ ...formUsuario, segundo_apellido: e.target.value })}
+                    value={formUsuario.apellido_materno}
+                    onChange={(e) => setFormUsuario({ ...formUsuario, apellido_materno: e.target.value })}
                   />
                 </Campo>
 
-                <Campo etiqueta="Cédula de Identidad (CI) *" error={erroresFormUsuario.ci?.[0]}>
+                <Campo etiqueta="Cédula de identidad *" error={erroresFormUsuario.ci_numero?.[0]}>
                   <input
                     type="text"
                     required
                     className="campo__control"
-                    placeholder="Ej. 7894561 SC"
-                    value={formUsuario.ci}
-                    onChange={(e) => setFormUsuario({ ...formUsuario, ci: e.target.value })}
+                    placeholder="Ej. 7894561"
+                    value={formUsuario.ci_numero}
+                    onChange={(e) => setFormUsuario({ ...formUsuario, ci_numero: e.target.value })}
                   />
                 </Campo>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <Campo etiqueta="Fecha de nacimiento *" error={erroresFormUsuario.fecha_nacimiento?.[0]}>
+                  <input
+                    type="date"
+                    required
+                    className="campo__control"
+                    value={formUsuario.fecha_nacimiento}
+                    onChange={(e) => setFormUsuario({ ...formUsuario, fecha_nacimiento: e.target.value })}
+                  />
+                </Campo>
+
                 <Campo etiqueta="Teléfono" error={erroresFormUsuario.telefono?.[0]}>
                   <input
                     type="tel"
@@ -478,24 +550,57 @@ export default function Usuarios() {
                     onChange={(e) => setFormUsuario({ ...formUsuario, telefono: e.target.value })}
                   />
                 </Campo>
+              </div>
 
-                <Campo etiqueta="Rol Asignado *" error={erroresFormUsuario.rol_id?.[0]}>
+              <div style={{ marginTop: '0.75rem' }}>
+                <Campo etiqueta="Rol *" error={erroresFormUsuario.rol_id?.[0]}>
                   <select
                     className="campo__control"
                     required
                     value={formUsuario.rol_id}
-                    onChange={(e) => setFormUsuario({ ...formUsuario, rol_id: e.target.value })}
+                    onChange={(e) => setFormUsuario({ ...formUsuario, rol_id: e.target.value, carrera_ids: [] })}
                   >
+                    <option value="">Elige un rol interno</option>
                     {rolesCatalogo
-                      .filter((r) => r.codigo !== 'EGRESADO')
-                      .map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.nombre} ({r.codigo})
+                      .filter((rol) => rol.es_panel)
+                      .map((rol) => (
+                        <option key={rol.id} value={rol.id}>
+                          {rol.nombre} ({rol.codigo})
                         </option>
                       ))}
                   </select>
                 </Campo>
               </div>
+
+              {rolesCatalogo.find((rol) => String(rol.id) === String(formUsuario.rol_id))?.alcance_carrera && (
+                <fieldset style={{ marginTop: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem' }}>
+                  <legend style={{ padding: '0 0.35rem', fontSize: '0.9rem' }}>Carreras que atiende</legend>
+                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: 'var(--texto-suave)' }}>
+                    Opcional. Si marcas alguna, solo verá postulaciones de esas carreras.
+                  </p>
+                  <div style={{ maxHeight: '160px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {carrerasCatalogo.map((carrera) => (
+                      <label key={carrera.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={formUsuario.carrera_ids.map(String).includes(String(carrera.id))}
+                          onChange={(e) => {
+                            const id = carrera.id
+                            setFormUsuario((prev) => ({
+                              ...prev,
+                              carrera_ids: e.target.checked
+                                ? [...prev.carrera_ids, id]
+                                : prev.carrera_ids.filter((actual) => String(actual) !== String(id)),
+                            }))
+                          }}
+                        />
+                        <span>{carrera.nombre}{carrera.facultad ? ` · ${carrera.facultad}` : ''}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {erroresFormUsuario.carrera_ids?.[0] && <p className="campo__error">{erroresFormUsuario.carrera_ids[0]}</p>}
+                </fieldset>
+              )}
 
               <div style={{ marginTop: '0.75rem' }}>
                 <Campo etiqueta="Correo Electrónico Institucional *" error={erroresFormUsuario.correo?.[0]}>
@@ -511,13 +616,13 @@ export default function Usuarios() {
               </div>
 
               <div style={{ marginTop: '0.75rem' }}>
-                <Campo etiqueta="Contraseña Temporal *" error={erroresFormUsuario.password?.[0]}>
+                <Campo etiqueta={editandoId ? 'Nueva contraseña' : 'Contraseña temporal *'} error={erroresFormUsuario.password?.[0]}>
                   <input
                     type="password"
-                    required
-                    minLength={6}
+                    required={!editandoId}
+                    minLength={editandoId && !formUsuario.password ? undefined : 6}
                     className="campo__control"
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={editandoId ? 'Déjala en blanco para no cambiarla' : 'Mínimo 6 caracteres'}
                     value={formUsuario.password}
                     onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })}
                   />
@@ -538,7 +643,7 @@ export default function Usuarios() {
                   className="boton boton--primario"
                   disabled={guardandoUsuario}
                 >
-                  {guardandoUsuario ? 'Registrando…' : 'Crear Usuario Staff'}
+                  {guardandoUsuario ? 'Guardando…' : editandoId ? 'Guardar cambios' : 'Crear Usuario Staff'}
                 </button>
               </div>
             </form>

@@ -884,3 +884,313 @@
   color: var(--texto, #334155);
 }
 
+.perfil-bipolar {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid var(--borde, #e2e8f0);
+  border-radius: 12px;
+}
+
+.perfil-bipolar__cabecera {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.perfil-bipolar__cabecera h3 {
+  margin: 0 0 0.25rem;
+}
+
+.perfil-bipolar__cabecera p,
+.perfil-bipolar__leyenda {
+  margin: 0;
+  color: var(--texto-suave, #64748b);
+  font-size: 0.9rem;
+}
+
+.perfil-bipolar__leyenda {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.perfil-bipolar__leyenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.perfil-bipolar__muestra {
+  width: 1.4rem;
+  height: 0;
+  border-top: 3px solid #d97706;
+}
+
+.perfil-bipolar__muestra--real {
+  border-top-color: #1d4ed8;
+  border-top-style: solid;
+}
+
+.perfil-bipolar__muestra--ideal {
+  border-top-style: dashed;
+}
+
+.perfil-bipolar__tabla {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(7.5rem, 11rem) minmax(10rem, 1fr) minmax(7.5rem, 11rem);
+  grid-auto-rows: 2.6rem;
+  align-items: center;
+  column-gap: 0.35rem;
+}
+
+.perfil-bipolar__tabla--con-bruto {
+  grid-template-columns: 2.75rem 3rem minmax(7.5rem, 11rem) minmax(10rem, 1fr) minmax(7.5rem, 11rem);
+}
+
+.perfil-bipolar__fila {
+  display: contents;
+}
+
+.perfil-bipolar__regla {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--texto-suave, #64748b);
+  text-transform: uppercase;
+}
+
+.perfil-bipolar__regla--derecha,
+.perfil-bipolar__polo--bajo {
+  text-align: right;
+}
+
+.perfil-bipolar__escala-numeros,
+.perfil-bipolar__pista {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.perfil-bipolar__escala-numeros span,
+.perfil-bipolar__paso {
+  text-align: center;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.perfil-bipolar__factor {
+  font-weight: 800;
+  text-align: center;
+}
+
+.perfil-bipolar__bruto {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-suave, #64748b);
+}
+
+.perfil-bipolar__polo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.perfil-bipolar__pista {
+  position: relative;
+  height: 1.7rem;
+  background:
+    linear-gradient(to right, transparent 0 33%, #e2e8f0 33% 67%, transparent 67% 100%);
+  border-radius: 999px;
+}
+
+.perfil-bipolar__paso--boton {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  height: 100%;
+  z-index: 2;
+}
+
+.perfil-bipolar__paso--activo {
+  background: rgba(217, 119, 6, 0.18);
+}
+
+.perfil-bipolar__curvas {
+  grid-column: 3;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.perfil-bipolar__tabla--con-bruto .perfil-bipolar__curvas {
+  grid-column: 4;
+}
+
+.perfil-bipolar__curva {
+  fill: none;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.perfil-bipolar__curva--ideal {
+  stroke: #d97706;
+  stroke-dasharray: 5 4;
+}
+
+.perfil-bipolar__curva--real {
+  stroke: #1d4ed8;
+}
+
+.perfil-bipolar__marca {
+  position: absolute;
+  top: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.perfil-bipolar__marca--ideal {
+  width: 0.95rem;
+  height: 0.95rem;
+  background: #fff;
+  border: 3px solid #d97706;
+}
+
+.perfil-bipolar__marca--real {
+  background: #1d4ed8;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.informe {
+  margin-top: 2rem;
+}
+
+.informe__cabecera {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.informe__cabecera h2,
+.informe__cabecera p {
+  margin: 0;
+}
+
+.informe__global {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 0;
+}
+
+.informe__global strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.informe-puntajes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.informe-puntaje {
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid var(--borde, #e2e8f0);
+  border-radius: 12px;
+}
+
+.informe-puntaje h3,
+.informe-puntaje p {
+  margin: 0;
+}
+
+.informe-puntaje__valor {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0.35rem 0;
+}
+
+.informe-puntaje ul {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+}
+
+.informe-puntaje li,
+.informe-puntaje__subtotal {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.informe-puntaje--total {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.perfil-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 2rem 1rem;
+}
+
+.perfil-modal__panel {
+  width: min(1100px, 100%);
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.perfil-modal__cabecera,
+.perfil-modal__acciones {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.perfil-modal__cabecera h2,
+.perfil-modal__cabecera p {
+  margin: 0;
+}
+
+.perfil-modal__acciones {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .perfil-bipolar__tabla {
+    grid-template-columns: 2rem minmax(4.5rem, 1fr) minmax(6rem, 1.6fr) minmax(4.5rem, 1fr);
+  }
+
+  .perfil-bipolar__tabla--con-bruto {
+    grid-template-columns: 1.8rem 2.2rem minmax(4rem, 1fr) minmax(5.5rem, 1.5fr) minmax(4rem, 1fr);
+  }
+
+  .perfil-bipolar__polo {
+    font-size: 0.68rem;
+  }
+}
+

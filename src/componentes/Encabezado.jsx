@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router'
 import { useSesion } from '../sesion/SesionContext.jsx'
-import { esEvaluador } from '../utilidades/roles.js'
+import { esEmpresa, inicioDe, puedeEntrarAlPanel } from '../utilidades/roles.js'
 
 function iniciales(texto) {
   return texto
@@ -46,7 +46,7 @@ export default function Encabezado() {
   }
 
   const nombre = usuario ? usuario.persona?.nombres ?? usuario.correo : ''
-  const tienePanel = esEvaluador(usuario)
+  const tienePanel = puedeEntrarAlPanel(usuario)
 
   return (
     <header className={`encabezado ${abierto ? 'encabezado--abierto' : ''}`}>
@@ -74,12 +74,14 @@ export default function Encabezado() {
           <div className="encabezado__enlaces">
             <NavLink to="/" end className="enlace-nav">Inicio</NavLink>
             {tienePanel && <NavLink to="/panel" className="enlace-nav">Panel</NavLink>}
+            {esEmpresa(usuario) && <NavLink to="/empresa" className="enlace-nav">Mi empresa</NavLink>}
+            {!usuario && <NavLink to="/empresa/registro" className="enlace-nav">Empresas</NavLink>}
           </div>
 
           <div className="encabezado__cuenta">
             {usuario ? (
               <>
-                <NavLink to={tienePanel ? '/panel' : '/mi-cuenta'} end className="enlace-nav enlace-nav--usuario">
+                <NavLink to={inicioDe(usuario)} end className="enlace-nav enlace-nav--usuario">
                   <span className="avatar" aria-hidden="true">{iniciales(nombre)}</span>
                   <span className="enlace-nav__nombre">{nombre}</span>
                 </NavLink>
