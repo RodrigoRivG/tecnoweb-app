@@ -40,7 +40,7 @@ export default function ModulosEvaluacion({ postulacionId }) {
       <header>
         <h2 id="titulo-modulos">Tus 4 módulos</h2>
         <p>
-          Personalidad, inteligencia y habilidades blandas asignan un libro. En habilidades específicas rindes los tres libros de tu carrera.
+          Se asigna un libro por cada una de las cuatro familias.
         </p>
       </header>
 

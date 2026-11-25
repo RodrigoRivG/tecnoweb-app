@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { obtenerTodasPostulaciones } from '../../api/evaluador.js'
 import { ErrorCarga, Esqueleto } from '../../componentes/Estado.jsx'
 import { useConsulta } from '../../utilidades/useConsulta.js'
@@ -22,6 +22,8 @@ function badgeEtapa(etapa) {
 }
 
 export default function Postulaciones() {
+  const [parametros] = useSearchParams()
+  const procesoId = parametros.get('proceso')
   const { datos: postulaciones, cargando, error, reintentar } = useConsulta(obtenerTodasPostulaciones)
 
   if (cargando) {
@@ -43,12 +45,16 @@ export default function Postulaciones() {
     )
   }
 
-  const filas = postulaciones || []
+  const filas = (postulaciones || []).filter((postulacion) => !procesoId || String(postulacion.proceso_id) === procesoId)
+  const codigoProceso = filas.find((postulacion) => postulacion.proceso_codigo)?.proceso_codigo
 
   return (
     <ListadoPanel
       titulo="Postulaciones y Evaluaciones"
-      descripcion="Expedientes de postulantes universitarios por carrera, etapa y méritos para evaluación y adjudicación."
+      descripcion={procesoId
+        ? `Postulaciones del proceso ${codigoProceso ?? procesoId}. Desde aquí se califican las entrevistas y se consultan los resultados.`
+        : 'Expedientes de postulantes universitarios por carrera, etapa y méritos para evaluación y adjudicación.'}
+      acciones={procesoId ? <Link to="/panel/postulaciones" className="boton boton--secundario">Ver todas</Link> : null}
       filas={filas}
       textoDe={(p) => `${p.codigo} ${p.postulante?.nombre_completo} ${p.postulante?.correo} ${p.carrera} ${p.etapa_actual?.nombre}`}
       columnas={[

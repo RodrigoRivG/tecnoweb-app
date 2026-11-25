@@ -19,6 +19,7 @@ export default function RegistroEmpresa() {
   const [catalogo, setCatalogo] = useState(null)
   const [errorCatalogo, setErrorCatalogo] = useState(null)
   const [aviso, setAviso] = useState('')
+  const [errores, setErrores] = useState({})
   const [enviando, setEnviando] = useState(false)
   const [empresa, setEmpresa] = useState({
     razon_social: '',
@@ -83,6 +84,7 @@ export default function RegistroEmpresa() {
     evento.preventDefault()
     setEnviando(true)
     setAviso('')
+    setErrores({})
     try {
       const sesion = await registrarSolicitudEmpresa({
         ...empresa,
@@ -98,9 +100,17 @@ export default function RegistroEmpresa() {
       iniciarSesion(sesion)
       navegar('/empresa', { replace: true })
     } catch (error) {
-      setAviso(error.message || 'No se pudo registrar la solicitud.')
+      const campos = error.errores ?? {}
+      const textos = Object.values(campos).flat().filter(Boolean)
+      setErrores(campos)
+      setAviso(textos.length > 0 ? textos.join(' ') : (error.message || 'No se pudo registrar la solicitud.'))
       setEnviando(false)
     }
+  }
+
+  function errorDe(campo) {
+    const mensajes = errores[campo]
+    return Array.isArray(mensajes) ? mensajes[0] : undefined
   }
 
   return (
@@ -124,27 +134,27 @@ export default function RegistroEmpresa() {
           <section className="tarjeta" aria-labelledby="titulo-empresa">
             <h2 id="titulo-empresa">Empresa y contacto</h2>
             <div className="rejilla">
-              <Campo etiqueta="Razón social">{(props) => <input {...props} name="razon_social" value={empresa.razon_social} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="NIT">{(props) => <input {...props} name="nit" value={empresa.nit} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Correo de la empresa">{(props) => <input {...props} type="email" name="correo_empresa" value={empresa.correo_empresa} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Teléfono" opcional>{(props) => <input {...props} name="telefono" value={empresa.telefono} onChange={cambiarEmpresa} />}</Campo>
-              <Campo etiqueta="Nombres del contacto">{(props) => <input {...props} name="nombres" value={empresa.nombres} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Apellido del contacto">{(props) => <input {...props} name="apellido_paterno" value={empresa.apellido_paterno} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Cédula del contacto">{(props) => <input {...props} name="ci_numero" value={empresa.ci_numero} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Fecha de nacimiento">{(props) => <input {...props} type="date" name="fecha_nacimiento" value={empresa.fecha_nacimiento} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Correo de acceso">{(props) => <input {...props} type="email" name="correo_contacto" value={empresa.correo_contacto} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Contraseña" ayuda="Mínimo 8 caracteres, con letras y números.">{(props) => <input {...props} type="password" name="password" value={empresa.password} onChange={cambiarEmpresa} required />}</Campo>
-              <Campo etiqueta="Confirmar contraseña">{(props) => <input {...props} type="password" name="password_confirmation" value={empresa.password_confirmation} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Razón social" error={errorDe('razon_social')}>{(props) => <input {...props} name="razon_social" value={empresa.razon_social} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="NIT" error={errorDe('nit')}>{(props) => <input {...props} name="nit" value={empresa.nit} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Correo de la empresa" error={errorDe('correo_empresa')}>{(props) => <input {...props} type="email" name="correo_empresa" value={empresa.correo_empresa} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Teléfono" opcional error={errorDe('telefono')}>{(props) => <input {...props} name="telefono" value={empresa.telefono} onChange={cambiarEmpresa} />}</Campo>
+              <Campo etiqueta="Nombres del contacto" error={errorDe('nombres')}>{(props) => <input {...props} name="nombres" value={empresa.nombres} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Apellido del contacto" error={errorDe('apellido_paterno')}>{(props) => <input {...props} name="apellido_paterno" value={empresa.apellido_paterno} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Cédula del contacto" error={errorDe('ci_numero')}>{(props) => <input {...props} name="ci_numero" value={empresa.ci_numero} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Fecha de nacimiento" error={errorDe('fecha_nacimiento')}>{(props) => <input {...props} type="date" name="fecha_nacimiento" value={empresa.fecha_nacimiento} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Correo de acceso" error={errorDe('correo_contacto')}>{(props) => <input {...props} type="email" name="correo_contacto" value={empresa.correo_contacto} onChange={cambiarEmpresa} required />}</Campo>
+              <Campo etiqueta="Contraseña" ayuda="Mínimo 8 caracteres, con letras y números." error={errorDe('password')}>{(props) => <input {...props} type="password" name="password" value={empresa.password} onChange={cambiarEmpresa} required minLength={8} />}</Campo>
+              <Campo etiqueta="Confirmar contraseña" error={errorDe('password_confirmation')}>{(props) => <input {...props} type="password" name="password_confirmation" value={empresa.password_confirmation} onChange={cambiarEmpresa} required />}</Campo>
             </div>
           </section>
 
           <section className="tarjeta" aria-labelledby="titulo-puesto">
             <h2 id="titulo-puesto">Puesto</h2>
             <div className="rejilla">
-              <Campo etiqueta="Cargo">{(props) => <input {...props} name="cargo" value={puesto.cargo} onChange={cambiarPuesto} required />}</Campo>
-              <Campo etiqueta="Área" opcional>{(props) => <input {...props} name="area" value={puesto.area} onChange={cambiarPuesto} />}</Campo>
-              <Campo etiqueta="Vacantes">{(props) => <input {...props} type="number" min="1" max="50" name="vacantes" value={puesto.vacantes} onChange={cambiarPuesto} required />}</Campo>
-              <Campo etiqueta="Carrera de referencia">
+              <Campo etiqueta="Cargo" error={errorDe('cargo')}>{(props) => <input {...props} name="cargo" value={puesto.cargo} onChange={cambiarPuesto} required />}</Campo>
+              <Campo etiqueta="Área" opcional error={errorDe('area')}>{(props) => <input {...props} name="area" value={puesto.area} onChange={cambiarPuesto} />}</Campo>
+              <Campo etiqueta="Vacantes" error={errorDe('vacantes')}>{(props) => <input {...props} type="number" min="1" max="50" name="vacantes" value={puesto.vacantes} onChange={cambiarPuesto} required />}</Campo>
+              <Campo etiqueta="Carrera de referencia" error={errorDe('carrera_id')}>
                 {(props) => (
                   <select {...props} name="carrera_id" value={puesto.carrera_id} onChange={cambiarPuesto} required>
                     {catalogo.carreras.map((carrera) => (
@@ -154,13 +164,14 @@ export default function RegistroEmpresa() {
                 )}
               </Campo>
             </div>
-            <Campo etiqueta="Funciones">
+            <Campo etiqueta="Funciones" error={errorDe('descripcion_funciones')}>
               {(props) => <textarea {...props} name="descripcion_funciones" rows={4} value={puesto.descripcion_funciones} onChange={cambiarPuesto} required />}
             </Campo>
           </section>
 
           <section className="tarjeta" aria-labelledby="titulo-perfil">
             <h2 id="titulo-perfil">Perfil ideal, del 1 al 10</h2>
+            {errorDe('niveles') && <p className="aviso aviso--error" role="alert">{errorDe('niveles')}</p>}
             <h3>Personalidad</h3>
             <div className="rejilla">
               {catalogo.personalidad.map((dimension) => (
@@ -201,13 +212,14 @@ export default function RegistroEmpresa() {
 
           <section className="tarjeta" aria-labelledby="titulo-lista">
             <h2 id="titulo-lista">Lista cerrada</h2>
+            {errorDe('candidatos') && <p className="aviso aviso--error" role="alert">{errorDe('candidatos')}</p>}
             {candidatos.map((candidato, indice) => (
               <div className="rejilla" key={indice} style={{ marginBottom: '1rem' }}>
-                <Campo etiqueta="Nombres">{(props) => <input {...props} value={candidato.nombres} onChange={(evento) => cambiarCandidato(indice, 'nombres', evento.target.value)} required />}</Campo>
-                <Campo etiqueta="Apellido">{(props) => <input {...props} value={candidato.apellido_paterno} onChange={(evento) => cambiarCandidato(indice, 'apellido_paterno', evento.target.value)} required />}</Campo>
-                <Campo etiqueta="Cédula">{(props) => <input {...props} value={candidato.ci_numero} onChange={(evento) => cambiarCandidato(indice, 'ci_numero', evento.target.value)} required />}</Campo>
-                <Campo etiqueta="Fecha de nacimiento">{(props) => <input {...props} type="date" value={candidato.fecha_nacimiento} onChange={(evento) => cambiarCandidato(indice, 'fecha_nacimiento', evento.target.value)} required />}</Campo>
-                <Campo etiqueta="Correo">{(props) => <input {...props} type="email" value={candidato.correo} onChange={(evento) => cambiarCandidato(indice, 'correo', evento.target.value)} required />}</Campo>
+                <Campo etiqueta="Nombres" error={errorDe(`candidatos.${indice}.nombres`)}>{(props) => <input {...props} value={candidato.nombres} onChange={(evento) => cambiarCandidato(indice, 'nombres', evento.target.value)} required />}</Campo>
+                <Campo etiqueta="Apellido" error={errorDe(`candidatos.${indice}.apellido_paterno`)}>{(props) => <input {...props} value={candidato.apellido_paterno} onChange={(evento) => cambiarCandidato(indice, 'apellido_paterno', evento.target.value)} required />}</Campo>
+                <Campo etiqueta="Cédula" error={errorDe(`candidatos.${indice}.ci_numero`)}>{(props) => <input {...props} value={candidato.ci_numero} onChange={(evento) => cambiarCandidato(indice, 'ci_numero', evento.target.value)} required />}</Campo>
+                <Campo etiqueta="Fecha de nacimiento" error={errorDe(`candidatos.${indice}.fecha_nacimiento`)}>{(props) => <input {...props} type="date" value={candidato.fecha_nacimiento} onChange={(evento) => cambiarCandidato(indice, 'fecha_nacimiento', evento.target.value)} required />}</Campo>
+                <Campo etiqueta="Correo" error={errorDe(`candidatos.${indice}.correo`)}>{(props) => <input {...props} type="email" value={candidato.correo} onChange={(evento) => cambiarCandidato(indice, 'correo', evento.target.value)} required />}</Campo>
               </div>
             ))}
             <button type="button" className="boton boton--secundario" onClick={() => setCandidatos((lista) => [...lista, { ...CANDIDATO_VACIO }])}>

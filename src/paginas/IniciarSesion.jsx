@@ -85,10 +85,10 @@ export default function IniciarSesion() {
   return (
     <div className="acceso">
       <section className="acceso__presentacion">
-        <p className="portada__antetitulo">Bolsa de talento para egresados</p>
+        <p className="portada__antetitulo">Bolsa de talento</p>
         <h1>Entra a tu cuenta</h1>
         <p className="acceso__texto">
-          Usa el correo con el que te registraste para volver a tu perfil y a las convocatorias de tu carrera.
+          Usa el correo de tu cuenta. Según tu rol verás tu evaluación, el panel de tu empresa o la administración.
         </p>
       </section>
 

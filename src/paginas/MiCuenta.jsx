@@ -4,6 +4,7 @@ import { obtenerConvocatoriasEgresado, obtenerMisPostulaciones, postularAConvoca
 import { ErrorCarga, Esqueleto, Vacio } from '../componentes/Estado.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { formatearFecha, formatearPuntaje } from '../utilidades/formato.js'
+import { esCandidatoExterno } from '../utilidades/roles.js'
 import { useConsulta } from '../utilidades/useConsulta.js'
 
 export default function MiCuenta() {
@@ -17,7 +18,7 @@ export default function MiCuenta() {
     return <Navigate to="/iniciar-sesion" replace state={{ desde: '/mi-cuenta' }} />
   }
 
-  if (usuario.rol?.codigo === 'CANDIDATO_EXTERNO') {
+  if (esCandidatoExterno(usuario)) {
     return <CuentaCandidato />
   }
 
@@ -29,8 +30,10 @@ function CuentaCandidato() {
 
   return (
     <div className="contenedor seccion">
-      <h1 className="titulo-pagina">Tu evaluación</h1>
-      <p className="seccion__descripcion">Solo puedes rendir la convocatoria para la que fuiste invitado.</p>
+      <h1 className="titulo-pagina">Tu evaluación de empresa</h1>
+      <p className="seccion__descripcion">
+        Esta cuenta es de candidato invitado por una empresa. No postulas a las convocatorias de egresados: solo rindes las pruebas del puesto que te asignaron.
+      </p>
       {postulacionesConsulta.error && (
         <ErrorCarga error={postulacionesConsulta.error} onReintentar={postulacionesConsulta.reintentar} />
       )}
@@ -39,7 +42,7 @@ function CuentaCandidato() {
         {(postulacionesConsulta.datos ?? []).map((postulacion) => (
           <article key={postulacion.id} className="tarjeta">
             <h2>{postulacion.convocatoria?.nombre}</h2>
-            <p>{postulacion.convocatoria?.carrera}</p>
+            <p>Carrera de referencia: {postulacion.convocatoria?.carrera}</p>
             <Link to={`/postulaciones/${postulacion.id}`} className="boton">Rendir evaluaciones</Link>
           </article>
         ))}

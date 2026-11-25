@@ -11,7 +11,7 @@ import ModalEvaluacionEntrevista from '../componentes/ModalEvaluacionEntrevista.
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { formatearFecha, formatearTamano } from '../utilidades/formato.js'
 import { useConsulta } from '../utilidades/useConsulta.js'
-import { puedeEntrarAlPanel, tienePermiso } from '../utilidades/roles.js'
+import { esCandidatoExterno, puedeEntrarAlPanel, tienePermiso } from '../utilidades/roles.js'
 
 export default function DetallePostulacion() {
   const { id } = useParams()
@@ -30,6 +30,7 @@ export default function DetallePostulacion() {
 
   const consulta = useConsulta(obtenerDetallePostulacion, id)
   const enPanel = puedeEntrarAlPanel(usuario)
+  const esCandidato = esCandidatoExterno(usuario)
   const puedeRequisitos = tienePermiso(usuario, 'requisitos.aprobar')
   const puedeCv = tienePermiso(usuario, 'cv.calificar')
   const puedeEntrevista = tienePermiso(usuario, 'entrevista.calificar')
@@ -158,7 +159,7 @@ export default function DetallePostulacion() {
 
       <header className="seccion__cabecera" style={{ marginBottom: '1.5rem' }}>
         <div>
-          <p className="convocatoria__facultad">{convocatoria.facultad}</p>
+          {!esCandidato && <p className="convocatoria__facultad">{convocatoria.facultad}</p>}
           <h1 className="titulo-pagina" style={{ margin: '0.25rem 0' }}>
             Postulación <span className="codigo" style={{ color: 'var(--primario)' }}>{postulacion.codigo}</span>
           </h1>
@@ -170,7 +171,8 @@ export default function DetallePostulacion() {
             </p>
           )}
           <p className="seccion__descripcion">
-            {convocatoria.nombre} · {convocatoria.carrera} (Gestión {convocatoria.gestion})
+            {convocatoria.nombre} · {convocatoria.carrera}
+            {convocatoria.gestion ? ` (Gestión ${convocatoria.gestion})` : ''}
           </p>
         </div>
         <div>
@@ -246,7 +248,7 @@ export default function DetallePostulacion() {
       </section>
 
       {/* Bloque 2: Paso 3 - Requisitos Documentales */}
-      {postulacion.requisitos?.length > 0 && (
+      {!esCandidato && postulacion.requisitos?.length > 0 && (
       <section aria-labelledby="titulo-requisitos" style={{ marginTop: '2.5rem' }}>
         <h2 id="titulo-requisitos" style={{ fontSize: '1.3rem' }}>
           Paso 3: Carga de Requisitos Documentales
@@ -414,10 +416,12 @@ export default function DetallePostulacion() {
       </section>
       )}
 
-      {!enPanel && <ModulosEvaluacion postulacionId={postulacion.id} />}
+      {!enPanel && (
+        <ModulosEvaluacion postulacionId={postulacion.id} />
+      )}
 
       {/* Bloque 5: Paso 6 - Análisis de CV */}
-      {etapaAnalisisCv?.estado === 'PENDIENTE' && (
+      {!esCandidato && etapaAnalisisCv?.estado === 'PENDIENTE' && (
         <section aria-labelledby="titulo-paso6" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #f59e0b' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -441,7 +445,7 @@ export default function DetallePostulacion() {
         </section>
       )}
 
-      {etapaAnalisisCv?.estado === 'APROBADA' && (
+      {!esCandidato && etapaAnalisisCv?.estado === 'APROBADA' && (
         <section aria-labelledby="titulo-paso6-aprobado" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #16a34a' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -466,7 +470,7 @@ export default function DetallePostulacion() {
       )}
 
       {/* Bloque 6: Paso 7 - Entrevista */}
-      {etapaEntrevista?.estado === 'PENDIENTE' && (
+      {!esCandidato && etapaEntrevista?.estado === 'PENDIENTE' && (
         <section aria-labelledby="titulo-paso7" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid var(--primario)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -490,7 +494,7 @@ export default function DetallePostulacion() {
         </section>
       )}
 
-      {etapaEntrevista?.estado === 'APROBADA' && (
+      {!esCandidato && etapaEntrevista?.estado === 'APROBADA' && (
         <section aria-labelledby="titulo-paso7-aprobado" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #16a34a' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -517,7 +521,7 @@ export default function DetallePostulacion() {
       {puedeInforme && <InformeCandidato postulacionId={id} />}
 
       {/* Bloque 7: Paso 8 - Selección */}
-      {etapaSeleccion?.estado === 'PENDIENTE' && (
+      {!esCandidato && etapaSeleccion?.estado === 'PENDIENTE' && (
         <section aria-labelledby="titulo-paso8-pendiente" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #eab308' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -541,7 +545,7 @@ export default function DetallePostulacion() {
         </section>
       )}
 
-      {etapaSeleccion?.estado === 'APROBADA' && (
+      {!esCandidato && etapaSeleccion?.estado === 'APROBADA' && (
         <section aria-labelledby="titulo-paso8" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #eab308', background: '#fefce8' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>

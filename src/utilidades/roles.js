@@ -37,6 +37,10 @@ export function esEgresado(usuario) {
   return usuario?.rol?.codigo === 'EGRESADO'
 }
 
+export function esCandidatoExterno(usuario) {
+  return usuario?.rol?.codigo === 'CANDIDATO_EXTERNO'
+}
+
 export function esEmpresa(usuario) {
   return usuario?.rol?.codigo === 'EMPRESA'
 }

@@ -117,6 +117,122 @@ td.numero .tabla__acciones {
   margin-left: auto;
 }
 
+.solicitud-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+}
+
+.solicitud-filtro {
+  min-height: 40px;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto-suave);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.solicitud-filtro:hover {
+  border-color: var(--primario);
+  color: var(--primario);
+}
+
+.solicitud-filtro[aria-selected='true'] {
+  background: var(--primario);
+  border-color: var(--primario);
+  color: var(--sobre-primario);
+}
+
+.solicitud-lista {
+  display: grid;
+  gap: 1rem;
+}
+
+.solicitud__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.solicitud__codigo {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.solicitud__nombre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.solicitud__nombre h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.solicitud__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.solicitud__datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem 1.5rem;
+  margin: 1.25rem 0;
+}
+
+.solicitud__datos dt {
+  color: var(--texto-suave);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.solicitud__datos dd {
+  margin: 0.15rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.solicitud__funciones {
+  grid-column: 1 / -1;
+}
+
+.solicitud__clave {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.solicitud__oculta {
+  color: var(--texto-suave);
+}
+
+@media (max-width: 900px) {
+  .solicitud__datos {
+    grid-template-columns: 1fr;
+  }
+
+  .solicitud__acciones {
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 860px) {
   .panel {
     grid-template-columns: 1fr;
