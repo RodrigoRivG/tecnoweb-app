@@ -72,7 +72,7 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
           maxWidth: '850px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--superficie)',
           borderRadius: '16px',
           padding: '2rem',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
@@ -110,8 +110,8 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
           <div
             style={{
               padding: '0.75rem 1rem',
-              backgroundColor: '#fee2e2',
-              color: '#991b1b',
+              backgroundColor: 'var(--error-suave)',
+              color: 'var(--error)',
               borderRadius: '8px',
               marginBottom: '1rem',
               fontSize: '0.88rem',
@@ -130,8 +130,8 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
             {/* Banner de Estado de Publicación */}
             <div
               style={{
-                background: datosRanking?.publicado ? '#f0fdf4' : '#fffbeb',
-                border: `1px solid ${datosRanking?.publicado ? '#bbf7d0' : '#fef3c7'}`,
+                background: datosRanking?.publicado ? 'var(--exito-suave)' : 'var(--destacado-suave)',
+                border: `1px solid ${datosRanking?.publicado ? 'var(--exito)' : 'var(--destacado)'}`,
                 borderRadius: '10px',
                 padding: '0.85rem 1.25rem',
                 marginBottom: '1.5rem',
@@ -143,7 +143,7 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
               }}
             >
               <div>
-                <span style={{ fontWeight: 700, color: datosRanking?.publicado ? '#166534' : '#b45309', fontSize: '0.95rem' }}>
+                <span style={{ fontWeight: 700, color: datosRanking?.publicado ? 'var(--exito)' : 'var(--destacado)', fontSize: '0.95rem' }}>
                   {datosRanking?.publicado ? '✓ Ranking Oficial Publicado y Adjudicado' : '⏳ Cuadro de Honor en Borrador / Pre-adjudicación'}
                 </span>
                 <div style={{ fontSize: '0.82rem', color: 'var(--texto-suave)' }}>
@@ -177,9 +177,9 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
                   <div
                     key={cand.postulacion_id}
                     style={{
-                      border: esPrimero ? '2px solid #eab308' : esTop ? '1px solid #93c5fd' : '1px solid #e2e8f0',
+                      border: esPrimero ? '2px solid #eab308' : esTop ? '1px solid var(--info-borde)' : '1px solid var(--borde)',
                       borderRadius: '12px',
-                      background: esPrimero ? '#fefce8' : esTop ? '#f8fafc' : '#ffffff',
+                      background: esPrimero ? 'var(--destacado-suave)' : esTop ? 'var(--superficie-destacada)' : 'var(--superficie)',
                       padding: '1rem 1.25rem',
                       boxShadow: esPrimero ? '0 4px 6px -1px rgba(234, 179, 8, 0.15)' : 'none',
                     }}
@@ -192,7 +192,7 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
                             fontWeight: 800,
                             minWidth: '40px',
                             textAlign: 'center',
-                            color: cand.posicion <= 3 ? 'inherit' : '#64748b',
+                            color: cand.posicion <= 3 ? 'inherit' : 'var(--texto-suave)',
                           }}
                         >
                           {medalla}
@@ -237,7 +237,7 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
                         style={{
                           marginTop: '1rem',
                           paddingTop: '0.85rem',
-                          borderTop: '1px solid #e2e8f0',
+                          borderTop: '1px solid var(--borde)',
                         }}
                       >
                         <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--texto-suave)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
@@ -248,8 +248,8 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
                             <div
                               key={d.prueba_id}
                               style={{
-                                background: '#ffffff',
-                                border: '1px solid #e2e8f0',
+                                background: 'var(--superficie)',
+                                border: '1px solid var(--borde)',
                                 borderRadius: '8px',
                                 padding: '0.5rem 0.75rem',
                                 fontSize: '0.82rem',

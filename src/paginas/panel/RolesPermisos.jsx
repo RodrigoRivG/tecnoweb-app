@@ -319,8 +319,8 @@ export default function RolesPermisos() {
               style={{
                 padding: '1.25rem',
                 marginBottom: '1.5rem',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                background: 'var(--superficie-destacada)',
+                border: '1px solid var(--borde)',
               }}
             >
               <div
@@ -368,11 +368,11 @@ export default function RolesPermisos() {
                   style={{
                     marginTop: '1rem',
                     padding: '0.75rem 1rem',
-                    background: '#eff6ff',
+                    background: 'var(--info-suave)',
                     borderRadius: '6px',
-                    border: '1px solid #bfdbfe',
+                    border: '1px solid var(--info-borde)',
                     fontSize: '0.85rem',
-                    color: '#1e40af',
+                    color: 'var(--info)',
                   }}
                 >
                   💡 <strong>Superusuario:</strong> El rol <code>ADMIN</code> tiene acceso irrestricto concedido en el backend por diseño para garantizar la operatividad institucional del sistema.
@@ -391,7 +391,7 @@ export default function RolesPermisos() {
                     alignItems: 'center',
                     gap: '0.5rem',
                     marginBottom: '1rem',
-                    borderBottom: '1px solid #e2e8f0',
+                    borderBottom: '1px solid var(--borde)',
                     paddingBottom: '0.75rem',
                   }}
                 >
@@ -423,8 +423,8 @@ export default function RolesPermisos() {
                           gap: '0.75rem',
                           padding: '1rem',
                           borderRadius: '8px',
-                          border: concedido ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
-                          background: concedido ? '#f0f7ff' : '#ffffff',
+                          border: concedido ? '1px solid var(--info-borde)' : '1px solid var(--borde)',
+                          background: concedido ? 'var(--info-suave)' : 'var(--superficie)',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease-in-out',
                         }}
@@ -446,7 +446,7 @@ export default function RolesPermisos() {
                             <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{p.nombre}</span>
                           </div>
                           <div style={{ margin: '0.2rem 0', fontSize: '0.75rem' }}>
-                            <code style={{ color: '#2563eb', background: '#e0e7ff', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                            <code style={{ color: 'var(--violeta)', background: 'var(--violeta-suave)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
                               {p.codigo}
                             </code>
                           </div>

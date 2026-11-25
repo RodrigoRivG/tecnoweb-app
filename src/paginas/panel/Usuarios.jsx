@@ -343,7 +343,7 @@ export default function Usuarios() {
         <div className="tarjeta" style={{ overflowX: 'auto', padding: 0 }}>
           <table className="tabla" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'var(--fondo-superficie, #f8fafc)', borderBottom: '1px solid #e2e8f0' }}>
+              <tr style={{ background: 'var(--superficie-destacada)', borderBottom: '1px solid var(--borde)' }}>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Usuario / Persona</th>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>CI</th>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Correo</th>
@@ -365,7 +365,7 @@ export default function Usuarios() {
                   const ocupado = actualizandoUsuarioId === u.id
 
                   return (
-                    <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <tr key={u.id} style={{ borderBottom: '1px solid var(--borde)' }}>
                       <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>
                         {u.persona?.nombre_completo || 'Sin nombre registrado'}
                       </td>
@@ -573,7 +573,7 @@ export default function Usuarios() {
               </div>
 
               {rolesCatalogo.find((rol) => String(rol.id) === String(formUsuario.rol_id))?.alcance_carrera && (
-                <fieldset style={{ marginTop: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem' }}>
+                <fieldset style={{ marginTop: '0.75rem', border: '1px solid var(--borde)', borderRadius: '8px', padding: '0.75rem' }}>
                   <legend style={{ padding: '0 0.35rem', fontSize: '0.9rem' }}>Carreras que atiende</legend>
                   <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: 'var(--texto-suave)' }}>
                     Opcional. Si marcas alguna, solo verá postulaciones de esas carreras.

@@ -348,8 +348,8 @@
 }
 
 .modulos-prueba__estado--pendiente { color: var(--primario); }
-.modulos-prueba__estado--en_progreso { color: #b45309; }
-.modulos-prueba__estado--finalizado { color: #15803d; }
+.modulos-prueba__estado--en_progreso { color: var(--destacado); }
+.modulos-prueba__estado--finalizado { color: var(--exito); }
 .modulos-prueba__estado--bloqueada { color: var(--texto-suave); }
 
 .modulos-prueba__grupos {
@@ -508,6 +508,7 @@
 }
 
 .banco__interruptor input:checked + .banco__interruptor-pista::after {
+  background: var(--sobre-primario);
   transform: translateX(1.05rem);
 }
 
@@ -688,7 +689,7 @@
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
   background: var(--primario);
-  color: white;
+  color: var(--sobre-primario);
   font-size: 0.75rem;
   font-weight: 700;
 }

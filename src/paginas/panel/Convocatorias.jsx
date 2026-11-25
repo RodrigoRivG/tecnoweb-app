@@ -437,7 +437,7 @@ export default function Convocatorias() {
         <div className="tarjeta" style={{ overflowX: 'auto', padding: 0 }}>
           <table className="tabla" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'var(--fondo-superficie, #f8fafc)', borderBottom: '1px solid #e2e8f0' }}>
+              <tr style={{ background: 'var(--superficie-destacada)', borderBottom: '1px solid var(--borde)' }}>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Código / Convocatoria</th>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Carrera y Facultad</th>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Gestión</th>
@@ -461,7 +461,7 @@ export default function Convocatorias() {
                   const esAbierta = conv.estado === 'ABIERTO'
 
                   return (
-                    <tr key={conv.proceso_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <tr key={conv.proceso_id} style={{ borderBottom: '1px solid var(--borde)' }}>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <span className="codigo" style={{ fontSize: '0.8rem', display: 'inline-block', marginBottom: '0.2rem' }}>
                           {conv.codigo}
@@ -761,11 +761,11 @@ export default function Convocatorias() {
                 style={{
                   marginTop: '1rem',
                   padding: '0.85rem 1rem',
-                  background: '#f0fdf4',
+                  background: 'var(--exito-suave)',
                   borderRadius: '8px',
-                  border: '1px solid #bbf7d0',
+                  border: '1px solid var(--exito)',
                   fontSize: '0.85rem',
-                  color: '#166534',
+                  color: 'var(--exito)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, marginBottom: '0.25rem' }}>

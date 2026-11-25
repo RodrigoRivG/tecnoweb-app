@@ -147,7 +147,7 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
           maxWidth: '780px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--superficie)',
           borderRadius: '16px',
           padding: '2rem',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
@@ -185,8 +185,8 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
           <div
             style={{
               padding: '0.75rem 1rem',
-              backgroundColor: '#fee2e2',
-              color: '#991b1b',
+              backgroundColor: 'var(--error-suave)',
+              color: 'var(--error)',
               borderRadius: '8px',
               marginBottom: '1rem',
               fontSize: '0.88rem',
@@ -205,8 +205,8 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
             {/* Banner del expediente */}
             <div
               style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                background: 'var(--superficie-destacada)',
+                border: '1px solid var(--borde)',
                 borderRadius: '10px',
                 padding: '1rem 1.25rem',
                 marginBottom: '1.5rem',
@@ -251,10 +251,10 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
                   <div
                     key={criterio.id}
                     style={{
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--borde)',
                       borderRadius: '10px',
                       padding: '1.25rem',
-                      background: '#ffffff',
+                      background: 'var(--superficie)',
                       boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
                     }}
                   >
@@ -291,7 +291,7 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
                             width: '72px',
                             padding: '0.4rem 0.6rem',
                             borderRadius: '6px',
-                            border: '1px solid #cbd5e1',
+                            border: '1px solid var(--borde)',
                             fontWeight: 700,
                             textAlign: 'center',
                           }}
@@ -310,7 +310,7 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
                         width: '100%',
                         padding: '0.45rem 0.75rem',
                         borderRadius: '6px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--borde)',
                         fontSize: '0.85rem',
                         boxSizing: 'border-box',
                       }}
@@ -336,7 +336,7 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
                   width: '100%',
                   padding: '0.65rem 0.85rem',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--borde)',
                   fontSize: '0.9rem',
                   fontFamily: 'inherit',
                   boxSizing: 'border-box',
@@ -347,8 +347,8 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
             {/* Totalizador de puntaje y barra de resumen */}
             <div
               style={{
-                background: esAprobatoria ? '#f0fdf4' : '#fffbeb',
-                border: `1px solid ${esAprobatoria ? '#bbf7d0' : '#fef3c7'}`,
+                background: esAprobatoria ? 'var(--exito-suave)' : 'var(--destacado-suave)',
+                border: `1px solid ${esAprobatoria ? 'var(--exito)' : 'var(--destacado)'}`,
                 borderRadius: '12px',
                 padding: '1.25rem',
                 marginBottom: '1.5rem',
@@ -369,8 +369,8 @@ export default function ModalEvaluacionCv({ postulacionId, alCerrar, alCalificar
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     marginBottom: '0.35rem',
-                    backgroundColor: esAprobatoria ? '#dcfce7' : '#fee2e2',
-                    color: esAprobatoria ? '#166534' : '#991b1b',
+                    backgroundColor: esAprobatoria ? 'var(--exito-suave)' : 'var(--error-suave)',
+                    color: esAprobatoria ? 'var(--exito)' : 'var(--error)',
                   }}
                 >
                   {esAprobatoria ? '✓ Calificación Aprobatoria (≥ 50%)' : '✕ No Aprobatoria (< 50%)'}

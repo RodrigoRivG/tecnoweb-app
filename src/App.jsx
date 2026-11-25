@@ -1,5 +1,4 @@
-import { useEffect } from 'react'
-import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router'
+import { BrowserRouter, Link, Route, Routes } from 'react-router'
 import Encabezado from './componentes/Encabezado.jsx'
 import Bienvenida from './paginas/Bienvenida.jsx'
 import DetallePostulacion from './paginas/DetallePostulacion.jsx'
@@ -21,24 +20,6 @@ import InformeEmpresa from './paginas/InformeEmpresa.jsx'
 import SolicitudesEmpresa from './paginas/panel/SolicitudesEmpresa.jsx'
 import { SesionProvider } from './sesion/SesionContext.jsx'
 
-function TemaBienvenida() {
-  const { pathname } = useLocation()
-
-  useEffect(() => {
-    const enClaro =
-      ['/', '/iniciar-sesion', '/registro'].includes(pathname) ||
-      pathname.startsWith('/panel') ||
-      pathname.startsWith('/empresa') ||
-      pathname.startsWith('/postulaciones')
-
-    document.documentElement.classList.toggle('tema-claro', enClaro)
-
-    return () => document.documentElement.classList.remove('tema-claro')
-  }, [pathname])
-
-  return null
-}
-
 function NoEncontrada() {
   return (
     <div className="contenedor seccion">
@@ -52,7 +33,6 @@ export default function App() {
   return (
     <BrowserRouter>
       <SesionProvider>
-        <TemaBienvenida />
         <Encabezado />
         <main>
           <Routes>

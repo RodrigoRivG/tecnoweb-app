@@ -563,7 +563,7 @@ export default function Preguntas() {
                 fontSize: '0.9rem',
                 cursor: 'pointer',
                 background: estaActiva ? 'var(--primario)' : 'var(--superficie)',
-                color: estaActiva ? '#fff' : 'var(--texto)',
+                color: estaActiva ? 'var(--sobre-primario)' : 'var(--texto)',
                 boxShadow: estaActiva ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
                 transition: 'all 0.15s ease-in-out',
               }}
@@ -575,7 +575,7 @@ export default function Preguntas() {
                   padding: '0.1rem 0.45rem',
                   borderRadius: '12px',
                   background: estaActiva ? 'rgba(255,255,255,0.25)' : 'var(--superficie-suave)',
-                  color: estaActiva ? '#fff' : 'var(--texto-suave)',
+                  color: estaActiva ? 'var(--sobre-primario)' : 'var(--texto-suave)',
                 }}
               >
                 {p.preguntas_count}
@@ -839,7 +839,7 @@ export default function Preguntas() {
                   style={{
                     marginBottom: '0.85rem',
                     padding: '0.5rem',
-                    background: '#f8fafc',
+                    background: 'var(--superficie-destacada)',
                     borderRadius: '8px',
                     border: '1px solid var(--borde)',
                     textAlign: 'center',
@@ -911,7 +911,7 @@ export default function Preguntas() {
                             fontSize: '0.72rem',
                             flexShrink: 0,
                             background: tienePuntaje ? 'var(--primario)' : 'var(--borde)',
-                            color: tienePuntaje ? '#fff' : 'var(--texto-suave)',
+                            color: tienePuntaje ? 'var(--sobre-primario)' : 'var(--texto-suave)',
                           }}
                         >
                           {opc.etiqueta}
@@ -1165,7 +1165,7 @@ export default function Preguntas() {
                 </div>
 
                 {form.imagen_url ? (
-                  <div style={{ textAlign: 'center', padding: '0.5rem', background: '#fff', borderRadius: '6px' }}>
+                  <div style={{ textAlign: 'center', padding: '0.5rem', background: 'var(--superficie)', borderRadius: '6px' }}>
                     <img
                       src={form.imagen_url}
                       alt="Vista previa de la lámina"
@@ -1192,7 +1192,7 @@ export default function Preguntas() {
                         padding: '1rem',
                         cursor: subiendoImagen ? 'wait' : 'pointer',
                         borderRadius: '6px',
-                        background: '#fff',
+                        background: 'var(--superficie)',
                         border: '1px solid var(--borde)',
                         color: 'var(--texto-suave)',
                         fontSize: '0.85rem',

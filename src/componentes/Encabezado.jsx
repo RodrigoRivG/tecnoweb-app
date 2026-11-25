@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Moon, Sun } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { esEmpresa, inicioDe, puedeEntrarAlPanel } from '../utilidades/roles.js'
@@ -16,6 +17,7 @@ export default function Encabezado() {
   const { usuario, cerrarSesion } = useSesion()
   const navegar = useNavigate()
   const [abierto, setAbierto] = useState(false)
+  const [oscuro, setOscuro] = useState(() => document.documentElement.dataset.tema === 'oscuro')
 
   useEffect(() => {
     if (!abierto) {
@@ -39,6 +41,18 @@ export default function Encabezado() {
     }
   }
 
+  function alternarTema() {
+    const tema = oscuro ? 'claro' : 'oscuro'
+    document.documentElement.dataset.tema = tema
+    setOscuro(!oscuro)
+
+    try {
+      localStorage.setItem('tecno.tema', tema)
+    } catch {
+      // El cambio se aplica aunque el navegador impida guardar la preferencia.
+    }
+  }
+
   async function salir() {
     setAbierto(false)
     await cerrarSesion()
@@ -47,6 +61,8 @@ export default function Encabezado() {
 
   const nombre = usuario ? usuario.persona?.nombres ?? usuario.correo : ''
   const tienePanel = puedeEntrarAlPanel(usuario)
+  const IconoTema = oscuro ? Sun : Moon
+  const etiquetaTema = oscuro ? 'Activar tema claro' : 'Activar tema oscuro'
 
   return (
     <header className={`encabezado ${abierto ? 'encabezado--abierto' : ''}`}>
@@ -95,6 +111,16 @@ export default function Encabezado() {
             )}
           </div>
         </nav>
+
+        <button
+          type="button"
+          className="encabezado__tema"
+          aria-label={etiquetaTema}
+          title={etiquetaTema}
+          onClick={alternarTema}
+        >
+          <IconoTema size={20} aria-hidden="true" />
+        </button>
       </div>
     </header>
   )

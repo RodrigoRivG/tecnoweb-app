@@ -8,6 +8,7 @@
   --nav-texto: #ffffff;
   --nav-texto-suave: rgb(255 255 255 / 82%);
   --nav-resalte: rgb(255 255 255 / 14%);
+  --nav-tamano-control: 44px;
 
   position: sticky;
   top: 0;
@@ -27,6 +28,8 @@
   justify-content: space-between;
   gap: 1rem;
   min-height: 68px;
+  max-width: none;
+  padding-inline-end: 8px;
 }
 
 .marca {
@@ -84,10 +87,6 @@
   align-items: center;
   gap: 0.25rem;
   min-width: 0;
-}
-
-.encabezado__enlaces {
-  margin-left: 1rem;
 }
 
 .encabezado__cuenta {
@@ -184,12 +183,13 @@
   color: var(--nav-texto);
 }
 
-.encabezado__menu {
-  display: none;
+.encabezado__menu,
+.encabezado__tema {
+  display: grid;
+  flex: none;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-left: auto;
+  width: var(--nav-tamano-control);
+  height: var(--nav-tamano-control);
   padding: 0;
   border: 0;
   border-radius: 8px;
@@ -198,7 +198,13 @@
   cursor: pointer;
 }
 
-.encabezado__menu:hover {
+.encabezado__menu {
+  display: none;
+  margin-left: auto;
+}
+
+.encabezado__menu:hover,
+.encabezado__tema:hover {
   background: var(--nav-resalte);
 }
 
@@ -245,6 +251,10 @@
 }
 
 @media (max-width: 760px) {
+  .encabezado__fila {
+    gap: 0.25rem;
+  }
+
   .encabezado__menu {
     display: grid;
   }

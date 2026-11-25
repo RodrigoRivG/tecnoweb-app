@@ -320,7 +320,7 @@ export default function RendirTest() {
             <div style={{ borderLeft: '1px solid var(--borde)' }} />
             <div>
               <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Porcentaje Normalizado</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#16a34a' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--exito)' }}>
                 {resultadoFinal.puntaje_normalizado ? `${resultadoFinal.puntaje_normalizado}%` : '100%'}
               </div>
             </div>
@@ -783,7 +783,7 @@ export default function RendirTest() {
                 className="boton boton--primario"
                 onClick={handleFinalizar}
                 disabled={finalizando}
-                style={{ background: '#16a34a', borderColor: '#16a34a' }}
+                style={{ background: 'var(--exito)', borderColor: 'var(--exito)', color: 'var(--superficie)' }}
               >
                 {finalizando ? 'Calificando…' : 'Sí, Entregar Evaluación'}
               </button>

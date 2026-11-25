@@ -286,8 +286,8 @@ export default function DetallePostulacion() {
               marginTop: '1rem',
               marginBottom: '1rem',
               padding: '1rem 1.25rem',
-              background: '#eff6ff',
-              border: '1px solid #bfdbfe',
+              background: 'var(--info-suave)',
+              border: '1px solid var(--info-borde)',
               borderRadius: '8px',
               display: 'flex',
               justifyContent: 'space-between',
@@ -297,8 +297,8 @@ export default function DetallePostulacion() {
             }}
           >
             <div>
-              <strong style={{ color: '#1e40af' }}>Revisión de Documentación (Comisión / Evaluador):</strong>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#1e3a8a' }}>
+              <strong style={{ color: 'var(--info)' }}>Revisión de Documentación (Comisión / Evaluador):</strong>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--info)' }}>
                 Todos los documentos obligatorios han sido presentados. Puedes validar el expediente y habilitar la evaluación psicológica del postulante.
               </p>
             </div>
@@ -546,27 +546,27 @@ export default function DetallePostulacion() {
       )}
 
       {!esCandidato && etapaSeleccion?.estado === 'APROBADA' && (
-        <section aria-labelledby="titulo-paso8" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #eab308', background: '#fefce8' }}>
+        <section aria-labelledby="titulo-paso8" className="tarjeta" style={{ marginTop: '1.5rem', borderLeft: '4px solid #eab308', background: 'var(--destacado-suave)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span className="insignia insignia--exito" style={{ marginBottom: '0.5rem', display: 'inline-block', backgroundColor: '#eab308', color: '#713f12' }}>
                 🏆 ¡Plaza Adjudicada!
               </span>
-              <h2 id="titulo-paso8" style={{ fontSize: '1.35rem', margin: '0.2rem 0', color: '#713f12' }}>
+              <h2 id="titulo-paso8" style={{ fontSize: '1.35rem', margin: '0.2rem 0', color: 'var(--destacado)' }}>
                 Paso 8: Selección y Adjudicación (Completada con Éxito)
               </h2>
-              <p style={{ margin: '0.3rem 0', color: '#854d0e', fontSize: '0.92rem' }}>
+              <p style={{ margin: '0.3rem 0', color: 'var(--destacado)', fontSize: '0.92rem' }}>
                 ¡Felicitaciones! Has superado todas las etapas del proceso de Talento Universitario con calificación de honor y obtenido la adjudicación del puesto.
               </p>
               {resultadoFinal && (
                 <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                  <div style={{ background: '#ffffff', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #fde047' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#854d0e', display: 'block' }}>Puntaje Total Ponderado</span>
-                    <strong style={{ fontSize: '1.1rem', color: '#713f12' }}>{resultadoFinal.puntaje_total} / 100 pts</strong>
+                  <div style={{ background: 'var(--superficie)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--destacado)' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--destacado)', display: 'block' }}>Puntaje Total Ponderado</span>
+                    <strong style={{ fontSize: '1.1rem', color: 'var(--destacado)' }}>{resultadoFinal.puntaje_total} / 100 pts</strong>
                   </div>
-                  <div style={{ background: '#ffffff', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #fde047' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#854d0e', display: 'block' }}>Lugar en el Ranking</span>
-                    <strong style={{ fontSize: '1.1rem', color: '#713f12' }}>#{resultadoFinal.posicion} (Terna de Honor)</strong>
+                  <div style={{ background: 'var(--superficie)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--destacado)' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--destacado)', display: 'block' }}>Lugar en el Ranking</span>
+                    <strong style={{ fontSize: '1.1rem', color: 'var(--destacado)' }}>#{resultadoFinal.posicion} (Terna de Honor)</strong>
                   </div>
                 </div>
               )}
