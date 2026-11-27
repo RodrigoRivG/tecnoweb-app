@@ -52,6 +52,10 @@ export function obtenerBitacoraAdmin(filtros) {
   return pedir('/admin/bitacora', { parametros: filtros })
 }
 
+export async function obtenerEstadisticasAdmin(filtros) {
+  return (await pedir('/admin/estadisticas', { parametros: filtros })).data
+}
+
 export async function crearRolAdmin(datos) {
   return (await pedir('/admin/roles', { metodo: 'POST', cuerpo: datos })).data
 }
