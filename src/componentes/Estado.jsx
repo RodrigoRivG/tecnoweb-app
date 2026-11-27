@@ -21,7 +21,7 @@ export function Vacio({ titulo, children }) {
   return (
     <div className="vacio">
       <p className="vacio__titulo">{titulo}</p>
-      {children && <p>{children}</p>}
+      {children && <div className="vacio__cuerpo">{children}</div>}
     </div>
   )
 }

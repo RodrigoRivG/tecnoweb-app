@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation, useParams } from 'react-router'
 import { obtenerBlobDocumento } from '../api/cliente.js'
 import { descargarDocumentoPostulacion, obtenerDetallePostulacion, obtenerResultadoFinal, subirDocumentoPostulacion } from '../api/egresado.js'
 import { aprobarRequisitos } from '../api/evaluador.js'
-import { ErrorCarga, Esqueleto } from '../componentes/Estado.jsx'
+import { ErrorCarga, Esqueleto, Vacio } from '../componentes/Estado.jsx'
 import ModalCuadroHonor from '../componentes/ModalCuadroHonor.jsx'
 import ModalEvaluacionCv from '../componentes/ModalEvaluacionCv.jsx'
 import InformeCandidato from '../componentes/InformeCandidato.jsx'
@@ -31,7 +31,8 @@ export default function DetallePostulacion() {
   const [aprobandoRequisitos, setAprobandoRequisitos] = useState(false)
 
   const [modulosRefresco, setModulosRefresco] = useState(0)
-  const consulta = useConsulta(obtenerDetallePostulacion, id)
+  const sesionLista = !cargandoSesion && Boolean(usuario)
+  const consulta = useConsulta(obtenerDetallePostulacion, id, sesionLista)
   const enPanel = puedeEntrarAlPanel(usuario)
   const esCandidato = esCandidatoExterno(usuario)
   const puedeRequisitos = tienePermiso(usuario, 'requisitos.aprobar')
@@ -43,12 +44,16 @@ export default function DetallePostulacion() {
   const etapaSeleccionEstado = consulta.datos?.etapas?.find((e) => e.codigo === 'SELECCION')?.estado
 
   useEffect(() => {
-    if (id && (etapaSeleccionEstado === 'APROBADA' || etapaSeleccionEstado === 'PENDIENTE')) {
+    if (!sesionLista || !id) {
+      return undefined
+    }
+    if (etapaSeleccionEstado === 'APROBADA' || etapaSeleccionEstado === 'PENDIENTE') {
       obtenerResultadoFinal(id)
         .then((res) => setResultadoFinal(res))
         .catch(() => {})
     }
-  }, [id, etapaSeleccionEstado])
+    return undefined
+  }, [id, etapaSeleccionEstado, sesionLista])
 
   if (cargandoSesion) {
     return <p className={esEnPanel ? 'seccion' : 'contenedor seccion'}>Cargando…</p>
@@ -64,12 +69,31 @@ export default function DetallePostulacion() {
   }
 
   if (consulta.error) {
+    const vuelta = enPanel ? '/panel/postulaciones' : '/mi-cuenta'
+    const etiquetaVuelta = enPanel ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'
+
+    if (consulta.error.estado === 404) {
+      return (
+        <div className={esEnPanel ? '' : 'contenedor seccion'}>
+          <p>
+            <Link to={vuelta}>{etiquetaVuelta}</Link>
+          </p>
+          <Vacio titulo={`No hay postulación #${id}`}>
+            <p>
+              Ese número ya no existe en la base (datos viejos o enlace guardado). Abrí un expediente desde el listado actual.
+            </p>
+            <p style={{ marginTop: '1rem' }}>
+              <Link to={vuelta} className="boton boton--primario">Ir al listado</Link>
+            </p>
+          </Vacio>
+        </div>
+      )
+    }
+
     return (
       <div className={esEnPanel ? '' : 'contenedor seccion'}>
         <p>
-          <Link to={enPanel ? '/panel/postulaciones' : '/mi-cuenta'}>
-            {enPanel ? '← Volver al listado de postulaciones' : '← Volver a mi cuenta'}
-          </Link>
+          <Link to={vuelta}>{etiquetaVuelta}</Link>
         </p>
         <ErrorCarga error={consulta.error} onReintentar={consulta.reintentar} />
       </div>

@@ -2,6 +2,7 @@ import { useConsulta } from '../utilidades/useConsulta.js'
 import { obtenerInformePostulacion } from '../api/evaluador.js'
 import { ErrorCarga, Esqueleto } from './Estado.jsx'
 import CuadroPerfilBipolar from './CuadroPerfilBipolar.jsx'
+import InformeEjecutivo from './InformeEjecutivo.jsx'
 
 function textoPuntaje(puntaje, maximo) {
   if (puntaje === null || puntaje === undefined) return 'Sin calificar'
@@ -32,9 +33,22 @@ export default function InformeCandidato({ postulacionId, consultar = obtenerInf
     esten_ideal: fila.valor_ideal,
     bruto: null,
   }))
+  const descripcionBlandas =
+    'Habilidades blandas: 49 ítems en 8 dimensiones del perfil (escala 1–10).'
 
   return (
     <section className="informe" aria-labelledby="titulo-informe">
+      <InformeEjecutivo
+        ejecutivo={informe.informe_ejecutivo}
+        perfilPersonalidad={personalidad}
+        compatibilidad={informe.porcentaje_compatibilidad_global}
+        aproximacionPersonalidad={informe.porcentaje_aproximacion_personalidad}
+        completitud={informe.completitud}
+      />
+
+      <details className="informe__detalle">
+        <summary className="no-print">Detalle ampliado (16PF, habilidades blandas y desglose)</summary>
+        <div className="informe__ampliado">
       <header className="informe__cabecera">
         <div>
           <h2 id="titulo-informe">Informe final</h2>
@@ -43,24 +57,29 @@ export default function InformeCandidato({ postulacionId, consultar = obtenerInf
         <p className="informe__global">
           <span>Compatibilidad</span>
           <strong>
-            {informe.porcentaje_compatibilidad_global === null ? '—' : `${informe.porcentaje_compatibilidad_global}%`}
+            {informe.porcentaje_compatibilidad_global === null
+              ? 'Pendiente'
+              : `${informe.porcentaje_compatibilidad_global}%`}
           </strong>
         </p>
       </header>
 
       <CuadroPerfilBipolar
         titulo="Perfil de personalidad (16PF)"
-        descripcion="Curva ideal de la convocatoria y curva real del postulante, en estenes del 1 al 10."
+        descripcion="Comparación visual del candidato frente al perfil deseado. No es aprobado/reprobado: describe tendencias de personalidad."
         filas={personalidad}
         mostrarBruto
-        porcentaje={informe.porcentaje_aproximacion_personalidad}
+        porcentaje={informe.completitud?.personalidad_16pf_completa ? informe.porcentaje_aproximacion_personalidad : null}
       />
 
       <CuadroPerfilBipolar
         titulo="Perfil de habilidades blandas"
-        descripcion="Nivel ideal solicitado frente al nivel real en inteligencia emocional y competencias socioemocionales."
+        descripcion={descripcionBlandas}
         filas={blandas}
-        porcentaje={informe.porcentaje_aproximacion_habilidades}
+        variante="dimension"
+        porcentaje={
+          informe.completitud?.habilidades_blandas_completa ? informe.porcentaje_aproximacion_habilidades : null
+        }
       />
 
       <div className="informe-puntajes">
@@ -114,6 +133,8 @@ export default function InformeCandidato({ postulacionId, consultar = obtenerInf
           <p>Puntaje ponderado para el ranking de la convocatoria.</p>
         </article>
       </div>
+        </div>
+      </details>
     </section>
   )
 }

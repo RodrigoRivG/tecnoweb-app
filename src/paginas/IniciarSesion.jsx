@@ -4,12 +4,16 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { iniciarSesionEnApi } from '../api/auth.js'
 import Campo from '../componentes/Campo.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
-import { inicioDe, puedeEntrarAlPanel } from '../utilidades/roles.js'
+import { esCandidatoExterno, inicioDe, puedeEntrarAlPanel } from '../utilidades/roles.js'
 
 const VACIO = { correo: '', password: '' }
 
 /** Vuelve a la página pedida si es interna y el rol puede verla; si no, a la de inicio del rol. */
 function destinoPara(usuario, ruta) {
+  if (esCandidatoExterno(usuario)) {
+    return inicioDe(usuario)
+  }
+
   const interna = typeof ruta === 'string' && ruta.startsWith('/') && !ruta.startsWith('//')
 
   if (!interna || (ruta.startsWith('/panel') && !puedeEntrarAlPanel(usuario))) {

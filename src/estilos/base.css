@@ -73,6 +73,11 @@ a:hover {
   max-width: 760px;
 }
 
+.contenedor--informe {
+  max-width: 1320px;
+  padding-inline: clamp(12px, 2.5vw, 28px);
+}
+
 .seccion {
   padding-block: 2.5rem;
 }

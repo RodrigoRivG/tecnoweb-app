@@ -14,6 +14,15 @@ import {
 } from '../../api/admin.js'
 import { ErrorCarga, Esqueleto, Vacio } from '../../componentes/Estado.jsx'
 
+function librosVisiblesEnBanco(familias) {
+  return (familias ?? []).map((familiaItem) => ({
+    ...familiaItem,
+    detalle: (familiaItem.detalle ?? []).filter(
+      (libroItem) => libroItem.activa !== false && libroItem.codigo !== 'TMMS_24',
+    ),
+  }))
+}
+
 export default function BancoEvaluaciones() {
   const [familias, setFamilias] = useState(null)
   const [error, setError] = useState(null)
@@ -33,8 +42,9 @@ export default function BancoEvaluaciones() {
     obtenerJerarquiaBanco()
       .then((data) => {
         if (!activo) return
-        setFamilias(data)
-        const primera = data?.[0]
+        const visibles = librosVisiblesEnBanco(data)
+        setFamilias(visibles)
+        const primera = visibles?.[0]
         const libro = primera?.detalle?.[0]
         if (primera) setFamiliaCodigo(primera.codigo)
         if (libro) setLibroId(libro.id)
@@ -99,7 +109,7 @@ export default function BancoEvaluaciones() {
   }
 
   async function recargar(seleccionarId) {
-    const data = await obtenerJerarquiaBanco()
+    const data = librosVisiblesEnBanco(await obtenerJerarquiaBanco())
     setFamilias(data)
     if (seleccionarId) {
       const duena = data.find((item) => item.detalle?.some((libroItem) => libroItem.id === seleccionarId))

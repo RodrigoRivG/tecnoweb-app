@@ -4,12 +4,16 @@ import { useCallback, useEffect, useState } from 'react'
  * Ejecuta consultar(parametros) cada vez que cambian los parámetros y descarta respuestas viejas.
  * Mientras carga conserva los datos anteriores para no vaciar la pantalla.
  */
-export function useConsulta(consultar, parametros) {
+export function useConsulta(consultar, parametros, habilitado = true) {
   const [intento, setIntento] = useState(0)
   const [resultado, setResultado] = useState({ clave: null, datos: null, error: null })
-  const clave = JSON.stringify([parametros ?? null, intento])
+  const clave = JSON.stringify([parametros ?? null, intento, habilitado])
 
   useEffect(() => {
+    if (!habilitado) {
+      return undefined
+    }
+
     let vigente = true
 
     consultar(JSON.parse(clave)[0])

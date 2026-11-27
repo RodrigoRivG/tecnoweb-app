@@ -28,12 +28,25 @@ function marca(valor, tipo) {
   const left = posicion(valor)
   if (left === null) return null
 
+  const etiqueta = tipo === 'real' ? 'Real' : 'Ideal'
+  const texto = `${etiqueta} ${Number(valor).toFixed(1)}`
+
   return (
     <span
       className={`perfil-bipolar__marca perfil-bipolar__marca--${tipo}`}
       style={{ left: `${left}%` }}
+      title={texto}
+      aria-label={texto}
     />
   )
+}
+
+function curvaEsPlana(filas, clave) {
+  const valores = filas.map((fila) => fila[clave]).filter((v) => v != null && !Number.isNaN(Number(v)))
+  if (valores.length < 2) return false
+
+  const redondeados = new Set(valores.map((v) => Number(v).toFixed(1)))
+  return redondeados.size <= 1
 }
 
 function etiquetaFactor(fila, variante) {
@@ -62,6 +75,8 @@ export default function CuadroPerfilBipolar({
   const curvaReal = segmentos(filas, 'esten_real')
   const hayCurvaReal = filas.some((fila) => fila.esten_real != null)
   const hayCurvaIdeal = filas.some((fila) => fila.esten_ideal != null)
+  const realPlana = hayCurvaReal && curvaEsPlana(filas, 'esten_real')
+  const idealPlana = hayCurvaIdeal && curvaEsPlana(filas, 'esten_ideal')
   const columnas =
     variante === '16pf' && mostrarBruto
       ? 'perfil-bipolar__matriz--16pf-bruto'
@@ -96,6 +111,56 @@ export default function CuadroPerfilBipolar({
         <p className="informe__sin-ideal" role="note">
           La convocatoria no tiene <strong>perfil ideal</strong> definido; solo se muestra la curva real (azul).
         </p>
+      )}
+
+      {!editable && (realPlana || idealPlana) && (
+        <p className="informe__sin-ideal" role="note">
+          Los puntos quedaron casi todos en el mismo decil (línea vertical). Eso suele pasar en{' '}
+          <strong>datos de prueba</strong> cuando el candidato marca siempre las mismas opciones. Para evaluar a alguien,
+          mirá si la curva <strong>ideal</strong> (dorada) y la <strong>real</strong> (azul) se parecen cuando exista perfil
+          de convocatoria o de empresa.
+        </p>
+      )}
+
+      {!editable && (
+        <details className="perfil-bipolar__ayuda">
+          <summary>¿Cómo leer esta tabla?</summary>
+          <ul>
+            {variante === '16pf' ? (
+              <>
+                <li>
+                  Cada <strong>fila</strong> es un factor de personalidad del 16PF (A, B, C…). El texto a la izquierda y
+                  derecha describe el polo bajo y el polo alto del factor.
+                </li>
+                <li>
+                  La franja del <strong>1 al 10</strong> son <em>estenes</em> (como notas estandarizadas): 4–7 es rango
+                  medio; 1–3 y 8–10 son extremos hacia un polo u otro.
+                </li>
+                <li>
+                  El <strong>punto azul</strong> es el postulante; la <strong>línea dorada</strong>, si existe, es el perfil
+                  que la convocatoria o la empresa marcó como deseado.
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  Cada fila es una <strong>dimensión</strong> de inteligencia emocional u otra habilidad blanda medida en
+                  el test.
+                </li>
+                <li>
+                  «Por desarrollar» y «Fortaleza» son los polos bajo y alto; el punto azul indica dónde quedó el candidato
+                  en la escala 1–10.
+                </li>
+                <li>
+                  Con <strong>perfil ideal</strong> de vacante, comparás si el azul (real) se acerca al dorado (ideal).
+                </li>
+                <li>
+                  Un solo test de <strong>habilidades blandas</strong> con las <strong>8 dimensiones</strong> del perfil.
+                </li>
+              </>
+            )}
+          </ul>
+        </details>
       )}
 
       <div

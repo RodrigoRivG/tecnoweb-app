@@ -3,8 +3,8 @@ import { pedir } from './cliente.js'
 /**
  * Lista todas las postulaciones de todos los procesos para el panel de evaluador/admin.
  */
-export async function obtenerTodasPostulaciones() {
-  return (await pedir('/evaluador/postulaciones')).data
+export async function obtenerTodasPostulaciones(filtros = {}) {
+  return (await pedir('/evaluador/postulaciones', { parametros: filtros })).data
 }
 
 

@@ -5,6 +5,7 @@ import GraficoPerfilEmocional from '../componentes/GraficoPerfilEmocional.jsx'
 import GraficoPerfilLectura from '../componentes/GraficoPerfilLectura.jsx'
 import GraficoPerfilPurdue from '../componentes/GraficoPerfilPurdue.jsx'
 import GraficoPerfilHabilidadesBlandas from '../componentes/GraficoPerfilHabilidadesBlandas.jsx'
+import { etiquetaNotaPrueba } from '../utilidades/notaPrueba.js'
 import {
   finalizarEvaluacion,
   iniciarEvaluacion,
@@ -19,6 +20,12 @@ function formatearTiempo(segundos) {
   const mins = Math.floor(segundos / 60)
   const segs = segundos % 60
   return `${String(mins).padStart(2, '0')}:${String(segs).padStart(2, '0')}`
+}
+
+function formatearPorcentajeNormalizado(valor) {
+  if (valor === null || valor === undefined || valor === '') return '—'
+  const n = Number(valor)
+  return Number.isFinite(n) ? `${n}%` : '—'
 }
 
 export default function RendirTest() {
@@ -169,6 +176,7 @@ export default function RendirTest() {
     setRespuestasManuales({})
     setOpcionPendiente(null)
     setErrorAccion(null)
+    navigate(`/postulaciones/${id}/test?proceso_prueba_id=${ppId}`, { replace: true })
   }
 
   // Progreso general
@@ -223,6 +231,7 @@ export default function RendirTest() {
 
   // Tipos de prueba
   const codigoPrueba = evaluacion?.prueba?.codigo
+  const esTestDominos = codigoPrueba === 'DOMINOS_D48'
   const esTestInteligencia = codigoPrueba === 'ES_USTED_MUY_HABIL'
   const esTestEmocional = codigoPrueba === 'TMMS_24'
   const esTestPersonalidad = codigoPrueba === '16PF_FORMA_A' || codigoPrueba === '16PF_FORMA_B'
@@ -264,11 +273,15 @@ export default function RendirTest() {
     )
   }
 
-  // Selector de pestañas para pruebas de la misma etapa
+  const pruebaActivaId = procesoPruebaId ?? evaluacion?.proceso_prueba_id
+  const pruebaActualEnEtapa = evaluacion?.pruebas_etapa?.find((p) => p.id === pruebaActivaId)
+
+  // Selector de pestañas para pruebas de la misma etapa (también al revisar resultados)
   const selectorPruebas = evaluacion?.pruebas_etapa?.length > 1 && !intentoId && (
     <div className="selector-pruebas-etapa" role="tablist" aria-label="Pruebas disponibles en esta etapa">
       {evaluacion.pruebas_etapa.map((p) => {
-        const estaActiva = (procesoPruebaId ?? evaluacion.proceso_prueba_id) === p.id
+        const estaActiva = pruebaActivaId === p.id
+        const nota = etiquetaNotaPrueba(p)
         return (
           <button
             key={p.id}
@@ -279,9 +292,12 @@ export default function RendirTest() {
             onClick={() => handleCambiarPrueba(p.id)}
           >
             <span>{p.nombre}</span>
+            {p.completada && nota.principal !== '—' && (
+              <span className="pestana-prueba-nota">{nota.principal}</span>
+            )}
             {p.completada && (
               <span className="pestana-insignia-estado pestana-insignia-estado--completada">
-                {p.aprobada ? '✓ Aprobado' : 'Completado'}
+                {p.aprobada ? '✓ Aprobado' : 'Listo'}
               </span>
             )}
           </button>
@@ -289,6 +305,9 @@ export default function RendirTest() {
       })}
     </div>
   )
+
+  const progresoResultado = resultadoFinal?.progreso
+  const bateriaIncompleta = progresoResultado?.completa === false
 
   // =========================================================================
   // RENDER: Pantalla de resultado final (si ya rindió)
@@ -299,9 +318,14 @@ export default function RendirTest() {
         {selectorPruebas}
 
         <div className="tarjeta" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
-          <span className="insignia insignia--exito" style={{ fontSize: '1rem', padding: '0.4rem 1rem' }}>
-            ✓ {resultadoFinal.aprobada ? 'Evaluación Aprobada' : 'Evaluación Completada'}
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{bateriaIncompleta ? '⚠️' : '🎉'}</div>
+          <span
+            className={`insignia ${bateriaIncompleta ? 'insignia--advertencia' : 'insignia--exito'}`}
+            style={{ fontSize: '1rem', padding: '0.4rem 1rem' }}
+          >
+            {bateriaIncompleta
+              ? 'Evaluación parcial (faltan preguntas)'
+              : `✓ ${resultadoFinal.aprobada ? 'Evaluación Aprobada' : 'Evaluación Completada'}`}
           </span>
 
           <h1 style={{ fontSize: '1.75rem', margin: '1rem 0 0.5rem' }}>
@@ -309,8 +333,9 @@ export default function RendirTest() {
           </h1>
 
           <p style={{ color: 'var(--texto-suave)', maxWidth: '580px', margin: '0 auto 2rem' }}>
-            Tu evaluación ha sido registrada y calificada de forma satisfactoria por el sistema.
-            Los datos psicométricos fueron almacenados en tu perfil de postulación.
+            {bateriaIncompleta
+              ? 'Se guardaron las respuestas enviadas hasta ahora. El perfil 16PF y las métricas de coincidencia solo son válidos cuando completas toda la batería.'
+              : 'Tu evaluación ha sido registrada y calificada de forma satisfactoria por el sistema. Los datos psicométricos fueron almacenados en tu perfil de postulación.'}
           </p>
 
           <div
@@ -323,19 +348,31 @@ export default function RendirTest() {
               marginBottom: '2rem',
             }}
           >
-            <div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Puntaje Obtenido</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primario)' }}>
-                {resultadoFinal.puntaje_bruto ?? '—'} / {resultadoFinal.puntaje_maximo ?? '—'}
+            {esTestPersonalidad ? (
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Avance de la batería</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primario)' }}>
+                  {progresoResultado?.respondidas ?? '—'} / {progresoResultado?.total ?? evaluacion?.configuracion?.total_preguntas ?? '—'}{' '}
+                  preguntas
+                </div>
               </div>
-            </div>
-            <div style={{ borderLeft: '1px solid var(--borde)' }} />
-            <div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Porcentaje Normalizado</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--exito)' }}>
-                {resultadoFinal.puntaje_normalizado ? `${resultadoFinal.puntaje_normalizado}%` : '100%'}
-              </div>
-            </div>
+            ) : (
+              <>
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Puntaje Obtenido</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primario)' }}>
+                    {resultadoFinal.puntaje_bruto ?? '—'} / {resultadoFinal.puntaje_maximo ?? '—'}
+                  </div>
+                </div>
+                <div style={{ borderLeft: '1px solid var(--borde)' }} />
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>Porcentaje Normalizado</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--exito)' }}>
+                    {formatearPorcentajeNormalizado(resultadoFinal.puntaje_normalizado)}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Tarjeta de Diagnóstico de Coeficiente Intelectual (CI) si corresponde */}
@@ -463,6 +500,13 @@ export default function RendirTest() {
           <h1 style={{ fontSize: '1.85rem', margin: '0.25rem 0 1rem' }}>
             {evaluacion?.prueba?.nombre || 'Test de Evaluación Psicométrica'}
           </h1>
+          {pruebaActualEnEtapa?.completada && (
+            <div className="aviso aviso--exito" style={{ marginBottom: '1rem' }}>
+              <p>
+                Ya rendiste este instrumento. Elegí otra pestaña para ver otro resultado o volvé al detalle de tu postulación.
+              </p>
+            </div>
+          )}
 
           <p
             style={{
@@ -514,6 +558,12 @@ export default function RendirTest() {
                 <>
                   <strong>Instrucciones para Habilidades y Aptitudes Específicas:</strong> Lee con detenimiento cada pasaje y responde a la pregunta de razonamiento analítico seleccionando la alternativa más precisa. Cada pregunta tiene su propio tiempo.
                 </>
+              ) : esTestDominos ? (
+                <>
+                  <strong>Instrucciones (Dominós D-48):</strong> Observe la serie de fichas en cada lámina e
+                  identifique qué dominó completa el espacio vacío. Elija entre las ocho alternativas con el
+                  formato [puntos arriba|puntos abajo]. Cada pregunta tiene su propio tiempo.
+                </>
               ) : esTestInteligencia ? (
                 <>
                   <strong>Instrucciones:</strong> Analiza cada matriz lógica de 3x3 y selecciona cuál de los 8 mosaicos completa la secuencia geométrica correctamente. Cada pregunta tiene su propio tiempo.
@@ -536,16 +586,25 @@ export default function RendirTest() {
             </div>
           )}
 
-          <div style={{ textAlign: 'right' }}>
+          <div style={{ textAlign: 'right', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <button
               type="button"
-              className="boton boton--primario"
-              onClick={handleComenzar}
-              disabled={iniciando}
-              style={{ padding: '0.85rem 2rem', fontSize: '1.1rem' }}
+              className="boton boton--secundario"
+              onClick={() => navigate(`/postulaciones/${id}`)}
             >
-              {iniciando ? 'Iniciando test…' : 'Comenzar Evaluación Ahora →'}
+              Volver a mi postulación
             </button>
+            {!pruebaActualEnEtapa?.completada && (
+              <button
+                type="button"
+                className="boton boton--primario"
+                onClick={handleComenzar}
+                disabled={iniciando}
+                style={{ padding: '0.85rem 2rem', fontSize: '1.1rem' }}
+              >
+                {iniciando ? 'Iniciando test…' : 'Comenzar Evaluación Ahora →'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -657,7 +716,45 @@ export default function RendirTest() {
           )}
 
           {/* Renderizado de opciones según el tipo de test */}
-          {esTestInteligencia || esTestPurdue ? (
+          {esTestDominos ? (
+            <div>
+              <div
+                style={{
+                  fontSize: '0.9rem',
+                  color: 'var(--texto-suave)',
+                  marginBottom: '0.5rem',
+                  fontWeight: 600,
+                }}
+              >
+                Elija la ficha que completa la serie (formato [arriba|abajo]):
+              </div>
+              <div
+                className="opciones-likert-grid"
+                role="radiogroup"
+                aria-label="Opciones de dominó"
+              >
+                {preguntaActual.opciones?.map((opc) => {
+                  const estaSeleccionada = opcionPendiente === opc.id
+                  return (
+                    <button
+                      key={opc.id}
+                      type="button"
+                      className={`boton-opcion-likert ${
+                        estaSeleccionada ? 'boton-opcion-likert--seleccionada' : ''
+                      }`}
+                      onClick={() => handleElegirOpcion(opc.id)}
+                      disabled={guardando}
+                      role="radio"
+                      aria-checked={estaSeleccionada}
+                    >
+                      <span className="likert-numero">{opc.etiqueta}</span>
+                      <span className="likert-texto">{opc.texto}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : esTestInteligencia || esTestPurdue ? (
             <div>
               <div
                 style={{

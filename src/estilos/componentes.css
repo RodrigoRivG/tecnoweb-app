@@ -326,6 +326,15 @@
   font-weight: 600;
 }
 
+.vacio__cuerpo {
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.vacio__cuerpo p {
+  margin: 0.35rem 0;
+}
+
 .visualmente-oculto {
   position: absolute;
   width: 1px;

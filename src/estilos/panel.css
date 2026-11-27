@@ -76,6 +76,31 @@
   overflow-x: hidden;
 }
 
+.panel__pestañas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.panel__pestaña {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto-suave);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.panel__pestaña--activa {
+  border-color: var(--primario);
+  background: var(--superficie-suave);
+  color: var(--texto);
+}
+
 .panel__herramientas {
   display: flex;
   flex-wrap: wrap;

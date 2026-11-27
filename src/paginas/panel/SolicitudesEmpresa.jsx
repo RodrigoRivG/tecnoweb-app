@@ -194,7 +194,7 @@ export default function SolicitudesEmpresa() {
                     Ver Perfil Ideal
                   </button>
                   {solicitud.estado === 'EN_CURSO' && (
-                    <Link className="boton boton--secundario boton--chico" to={`/panel/postulaciones?proceso=${solicitud.proceso_id}`}>
+                    <Link className="boton boton--secundario boton--chico" to={`/panel/postulaciones?origen=empresa&proceso=${solicitud.proceso_id}`}>
                       Ir a entrevistas y resultados
                     </Link>
                   )}
