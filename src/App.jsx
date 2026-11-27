@@ -1,5 +1,6 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router'
+import { BrowserRouter, Link, Route, createRoutesFromElements, matchRoutes, useLocation, useRoutes } from 'react-router'
 import Encabezado from './componentes/Encabezado.jsx'
+import PiePagina from './componentes/PiePagina.jsx'
 import Bienvenida from './paginas/Bienvenida.jsx'
 import DetallePostulacion from './paginas/DetallePostulacion.jsx'
 import IniciarSesion from './paginas/IniciarSesion.jsx'
@@ -29,40 +30,55 @@ function NoEncontrada() {
   )
 }
 
+const rutas = createRoutesFromElements(
+  <>
+    <Route path="/" element={<Bienvenida />} />
+    <Route path="/iniciar-sesion" element={<IniciarSesion />} />
+    <Route path="/registro" element={<Registro />} />
+    <Route path="/empresa/registro" element={<RegistroEmpresa />} />
+    <Route path="/empresa" element={<PanelEmpresa />} />
+    <Route path="/empresa/informes/:id" element={<InformeEmpresa />} />
+    <Route path="/mi-cuenta" element={<MiCuenta />} />
+    <Route path="/postulaciones/:id" element={<DetallePostulacion />} />
+    <Route path="/postulaciones/:id/test" element={<RendirTest />} />
+    <Route path="/panel" element={<PanelLayout />}>
+      <Route index element={<InicioPanel />} />
+      <Route path="facultades" element={<Facultades />} />
+      <Route path="carreras" element={<Carreras />} />
+      <Route path="convocatorias" element={<Convocatorias />} />
+      <Route path="preguntas" element={<BancoEvaluaciones />} />
+      <Route path="postulaciones" element={<Postulaciones />} />
+      <Route path="solicitudes-empresa" element={<SolicitudesEmpresa />} />
+      <Route path="postulaciones/:id" element={<DetallePostulacion />} />
+      <Route path="usuarios" element={<Usuarios />} />
+      <Route path="roles-permisos" element={<RolesPermisos />} />
+    </Route>
+    <Route path="*" element={<NoEncontrada />} />
+  </>,
+)
+
+function ContenidoApp() {
+  const { pathname } = useLocation()
+  const contenido = useRoutes(rutas)
+  const coincidencias = matchRoutes(rutas, pathname) ?? []
+  const patron = coincidencias.map(({ route }) => route.path).filter(Boolean).join('/')
+  const ruta = patron && patron !== '*' ? patron : '/404'
+  const pagina = pathname.toLowerCase().replace(/\/+$/, '') || '/'
+
+  return (
+    <>
+      <Encabezado />
+      <main>{contenido}</main>
+      <PiePagina key={pagina} ruta={ruta} />
+    </>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <SesionProvider>
-        <Encabezado />
-        <main>
-          <Routes>
-            <Route path="/" element={<Bienvenida />} />
-            <Route path="/iniciar-sesion" element={<IniciarSesion />} />
-            <Route path="/registro" element={<Registro />} />
-            <Route path="/empresa/registro" element={<RegistroEmpresa />} />
-            <Route path="/empresa" element={<PanelEmpresa />} />
-            <Route path="/empresa/informes/:id" element={<InformeEmpresa />} />
-            <Route path="/mi-cuenta" element={<MiCuenta />} />
-            <Route path="/postulaciones/:id" element={<DetallePostulacion />} />
-            <Route path="/postulaciones/:id/test" element={<RendirTest />} />
-            <Route path="/panel" element={<PanelLayout />}>
-              <Route index element={<InicioPanel />} />
-              <Route path="facultades" element={<Facultades />} />
-              <Route path="carreras" element={<Carreras />} />
-              <Route path="convocatorias" element={<Convocatorias />} />
-              <Route path="preguntas" element={<BancoEvaluaciones />} />
-              <Route path="postulaciones" element={<Postulaciones />} />
-              <Route path="solicitudes-empresa" element={<SolicitudesEmpresa />} />
-              <Route path="postulaciones/:id" element={<DetallePostulacion />} />
-              <Route path="usuarios" element={<Usuarios />} />
-              <Route path="roles-permisos" element={<RolesPermisos />} />
-            </Route>
-            <Route path="*" element={<NoEncontrada />} />
-          </Routes>
-        </main>
-        <footer className="pie">
-          <div className="contenedor">Bolsa de talento para egresados</div>
-        </footer>
+        <ContenidoApp />
       </SesionProvider>
     </BrowserRouter>
   )

@@ -508,3 +508,15 @@
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
+
+.pie__contenido,
+.pie__visitas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.pie__contenido {
+  justify-content: space-between;
+}
