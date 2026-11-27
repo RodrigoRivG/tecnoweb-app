@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adjudicarSeleccionProceso, obtenerRankingProceso } from '../api/evaluador.js'
+import ConfirmacionDialog from './ConfirmacionDialog.jsx'
 
 export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esEvaluador }) {
   const [cargando, setCargando] = useState(true)
@@ -7,6 +8,7 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
   const [error, setError] = useState(null)
   const [datosRanking, setDatosRanking] = useState(null)
   const [expandidoId, setExpandidoId] = useState(null)
+  const [confirmarAdjudicacion, setConfirmarAdjudicacion] = useState(false)
 
   useEffect(() => {
     let activo = true
@@ -29,17 +31,14 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
     }
   }, [procesoId])
 
-  const handleAdjudicar = async () => {
-    if (!window.confirm('¿Deseas adjudicar las plazas y publicar el ranking oficial definitivo? Esta acción consolidará el proceso y aprobará a los seleccionados.')) {
-      return
-    }
-
+  const ejecutarAdjudicacion = async () => {
     try {
       setGuardando(true)
       setError(null)
       await adjudicarSeleccionProceso(procesoId)
       const data = await obtenerRankingProceso(procesoId)
       setDatosRanking(data)
+      setConfirmarAdjudicacion(false)
       if (alAdjudicar) alAdjudicar()
     } catch (err) {
       setError(err.mensaje || err.message || 'Error al adjudicar las plazas.')
@@ -155,7 +154,7 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
                 <button
                   type="button"
                   className="boton boton--primario"
-                  onClick={handleAdjudicar}
+                  onClick={() => setConfirmarAdjudicacion(true)}
                   disabled={guardando}
                   style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
                 >
@@ -283,6 +282,22 @@ export default function ModalCuadroHonor({ procesoId, alCerrar, alAdjudicar, esE
           </div>
         )}
       </div>
+
+      <ConfirmacionDialog
+        abierto={confirmarAdjudicacion}
+        titulo="¿Adjudicar y publicar la selección?"
+        etiquetaCancelar="Cancelar"
+        etiquetaConfirmar="Adjudicar y publicar"
+        confirmando={guardando}
+        estiloCapa={{ zIndex: 10001 }}
+        onCancelar={() => !guardando && setConfirmarAdjudicacion(false)}
+        onConfirmar={ejecutarAdjudicacion}
+      >
+        <p>
+          Se consolidará el proceso, se aprobará a los seleccionados del cuadro de honor y el ranking quedará
+          publicado como oficial. Esta acción no se puede deshacer desde el panel.
+        </p>
+      </ConfirmacionDialog>
     </div>
   )
 }

@@ -12,3 +12,8 @@ export async function obtenerConvocatorias(filtros) {
 export function obtenerPerfiles(filtros) {
   return pedir('/publico/perfiles', { parametros: filtros })
 }
+
+export async function obtenerInformePerfilPublico(codigoCandidato) {
+  const codigo = encodeURIComponent(codigoCandidato)
+  return (await pedir(`/publico/perfiles/${codigo}/informe`)).data
+}

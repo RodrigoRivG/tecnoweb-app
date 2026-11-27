@@ -3,15 +3,8 @@ import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } 
 import { crearCheckoutEmpresa, obtenerSolicitudesEmpresa, simularPagoEmpresa } from '../../api/empresa.js'
 import { ErrorCarga } from '../../componentes/Estado.jsx'
 import { useSesion } from '../../sesion/SesionContext.jsx'
+import { formatearMontoCentavos } from '../../utilidades/moneda.js'
 import { useConsulta } from '../../utilidades/useConsulta.js'
-
-function formatearMonto(centavos, moneda = 'usd') {
-  try {
-    return new Intl.NumberFormat('es-BO', { style: 'currency', currency: moneda.toUpperCase() }).format(centavos / 100)
-  } catch {
-    return `${(centavos / 100).toFixed(2)} ${moneda.toUpperCase()}`
-  }
-}
 
 export default function PagoEmpresa() {
   const { procesoId } = useParams()
@@ -23,6 +16,7 @@ export default function PagoEmpresa() {
   const [aviso, setAviso] = useState('')
   const [procesando, setProcesando] = useState(false)
   const [checkout, setCheckout] = useState(null)
+  const [checkoutCargando, setCheckoutCargando] = useState(true)
 
   const solicitud = solicitudes.datos?.find((item) => String(item.proceso_id) === String(procesoId))
   const esAmpliacion = params.get('ampliacion') === '1' || solicitud?.estado === 'EN_CURSO'
@@ -31,14 +25,34 @@ export default function PagoEmpresa() {
   const cantidadCobro = checkout?.cantidad_candidatos ?? (esAmpliacion ? cantidadPendiente : cantidadInicial)
 
   useEffect(() => {
-    if (!solicitud || checkout) return
+    if (!solicitud) return
     const puedePagar =
       (solicitud.estado === 'PENDIENTE_PAGO' && cantidadInicial >= 1) ||
       (solicitud.estado === 'EN_CURSO' && cantidadPendiente >= 1)
-    if (!puedePagar) return
+    if (!puedePagar) {
+      setCheckoutCargando(false)
+      return
+    }
+    if (checkout) {
+      setCheckoutCargando(false)
+      return
+    }
+    let activo = true
+    setCheckoutCargando(true)
     crearCheckoutEmpresa(procesoId)
-      .then(setCheckout)
-      .catch((error) => setAviso(error.message || 'No se pudo preparar el pago.'))
+      .then((data) => {
+        if (!activo) return
+        setCheckout(data)
+        setCheckoutCargando(false)
+      })
+      .catch((error) => {
+        if (!activo) return
+        setAviso(error.message || 'No se pudo preparar el pago.')
+        setCheckoutCargando(false)
+      })
+    return () => {
+      activo = false
+    }
   }, [procesoId, solicitud, checkout, cantidadInicial, cantidadPendiente])
 
   if (cargando) return <p className="contenedor seccion">Cargando…</p>
@@ -65,26 +79,7 @@ export default function PagoEmpresa() {
   }
 
   if (solicitud.datos_puesto_pendientes) {
-    return (
-      <div className="contenedor contenedor--angosto seccion">
-        <Link to={`/empresa/solicitudes/${procesoId}`}>← Volver a la vacante</Link>
-        <h1 className="titulo-pagina" style={{ marginTop: '1rem' }}>
-          El pago viene después del puesto
-        </h1>
-        <p className="seccion__descripcion">
-          El cobro se habilita cuando el cargo y el perfil ideal (16PF y habilidades) estén guardados. Completa ese paso
-          ahora o más tarde desde el panel; hasta entonces no hay compromiso de pago.
-        </p>
-        <div className="formulario__acciones formulario__acciones--registro" style={{ marginTop: '1rem' }}>
-          <Link to="/empresa" className="boton boton--secundario">
-            Volver al panel
-          </Link>
-          <Link to={`/empresa/solicitudes/${procesoId}/completar`} className="boton boton--primario">
-            Completar puesto y perfil
-          </Link>
-        </div>
-      </div>
-    )
+    return <Navigate to={`/empresa/solicitudes/${procesoId}/completar`} replace />
   }
 
   if (!esAmpliacion && cantidadInicial < 1) {
@@ -94,6 +89,7 @@ export default function PagoEmpresa() {
   const cancelado = params.get('cancelado') === '1'
   const modoStripe = checkout?.modo === 'stripe'
   const monto = checkout?.monto_centavos
+  const moneda = checkout?.moneda ?? 'bob'
 
   async function pagar() {
     setProcesando(true)
@@ -163,23 +159,39 @@ export default function PagoEmpresa() {
         </p>
         {monto != null && (
           <p style={{ marginTop: '0.75rem' }}>
-            <strong>Total estimado:</strong> {formatearMonto(monto)}
+            <strong>Total estimado:</strong> {formatearMontoCentavos(monto, moneda)}
             {` (${cantidadCobro} × tarifa por candidato)`}
           </p>
         )}
 
-        {modoStripe ? (
+        {checkoutCargando ? (
+          <p className="registro-paso-aviso" style={{ marginTop: '1rem' }} role="status">
+            Calculando el total del servicio…
+          </p>
+        ) : modoStripe ? (
           <p className="registro-paso-aviso" style={{ marginTop: '1rem' }}>
             Al terminar{esAmpliacion ? ' se activarán solo los candidatos nuevos' : ' se activarán los accesos de los candidatos registrados'}.
           </p>
         ) : (
           <p className="registro-paso-aviso" style={{ marginTop: '1rem' }}>
-            Modo demo sin Stripe configurado.
+            Stripe no está configurado en el servidor; solo en ese caso se usa el pago de prueba.
           </p>
         )}
 
-        <button type="button" className="boton" style={{ marginTop: '1rem', width: '100%' }} disabled={procesando} onClick={pagar}>
-          {procesando ? 'Redirigiendo…' : modoStripe ? 'Pagar con Stripe Checkout' : 'Continuar (demo sin Stripe)'}
+        <button
+          type="button"
+          className="boton"
+          style={{ marginTop: '1rem', width: '100%' }}
+          disabled={procesando || checkoutCargando}
+          onClick={pagar}
+        >
+          {procesando
+            ? 'Redirigiendo…'
+            : checkoutCargando
+              ? 'Preparando pago…'
+              : modoStripe
+                ? 'Pagar con Stripe Checkout'
+                : 'Continuar (pago de prueba)'}
         </button>
       </div>
     </div>

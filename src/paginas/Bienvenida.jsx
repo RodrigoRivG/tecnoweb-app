@@ -161,7 +161,8 @@ function ContenidoBienvenida({ busqueda }) {
         </div>
         <p className="seccion__descripcion">
           Candidatos que completaron el proceso y aceptaron publicar su perfil. Se muestran con un código para proteger
-          su identidad.
+          su identidad. Las empresas pueden abrir el informe de evaluación (resultados y compatibilidad) sin ver nombre ni
+          contacto.
         </p>
 
         {perfiles.error && <ErrorCarga error={perfiles.error} onReintentar={perfiles.reintentar} />}
@@ -185,6 +186,7 @@ function ContenidoBienvenida({ busqueda }) {
                     <th scope="col">Egreso</th>
                     <th scope="col" className="numero">Posición</th>
                     <th scope="col" className="numero">Puntaje</th>
+                    <th scope="col">Informe</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -201,6 +203,14 @@ function ContenidoBienvenida({ busqueda }) {
                       <td>{perfil.anio_egreso}</td>
                       <td className="numero">{perfil.posicion}</td>
                       <td className="numero">{formatearPuntaje(perfil.puntaje_total)}</td>
+                      <td>
+                        <Link
+                          to={`/perfiles/${encodeURIComponent(perfil.codigo_candidato)}/informe`}
+                          className="enlace-accion"
+                        >
+                          Ver informe
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

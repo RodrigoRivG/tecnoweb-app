@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Route, createRoutesFromElements, matchRoutes, useL
 import Encabezado from './componentes/Encabezado.jsx'
 import PiePagina from './componentes/PiePagina.jsx'
 import Bienvenida from './paginas/Bienvenida.jsx'
+import PerfilPublicoInforme from './paginas/PerfilPublicoInforme.jsx'
 import DetallePostulacion from './paginas/DetallePostulacion.jsx'
 import IniciarSesion from './paginas/IniciarSesion.jsx'
 import MiCuenta from './paginas/MiCuenta.jsx'
@@ -26,6 +27,7 @@ import PanelEmpresa from './paginas/PanelEmpresa.jsx'
 import InformeEmpresa from './paginas/InformeEmpresa.jsx'
 import SolicitudesEmpresa from './paginas/panel/SolicitudesEmpresa.jsx'
 import { SesionProvider } from './sesion/SesionContext.jsx'
+import { rutaParaRegistroVisita } from './utilidades/rutaVisitas.js'
 
 const Estadisticas = lazy(() => import('./paginas/panel/Estadisticas.jsx'))
 
@@ -41,6 +43,7 @@ function NoEncontrada() {
 const rutas = createRoutesFromElements(
   <>
     <Route path="/" element={<Bienvenida />} />
+    <Route path="/perfiles/:codigo/informe" element={<PerfilPublicoInforme />} />
     <Route path="/iniciar-sesion" element={<IniciarSesion />} />
     <Route path="/registro" element={<Registro />} />
     <Route path="/empresa/registro" element={<RegistroEmpresa />} />
@@ -79,16 +82,16 @@ function ContenidoApp() {
   const { pathname } = useLocation()
   const contenido = useRoutes(rutas)
   const coincidencias = matchRoutes(rutas, pathname) ?? []
-  const patron = coincidencias.map(({ route }) => route.path).filter(Boolean).join('/')
-  const ruta = patron && patron !== '*' ? patron : '/404'
+  const es404 = coincidencias.some(({ route }) => route.path === '*')
+  const ruta = es404 ? '/404' : rutaParaRegistroVisita(coincidencias, pathname)
   const pagina = pathname.toLowerCase().replace(/\/+$/, '') || '/'
 
   return (
-    <>
+    <div className="app-shell">
       <Encabezado />
-      <main>{contenido}</main>
+      <main className="app-shell__principal">{contenido}</main>
       <PiePagina key={pagina} ruta={ruta} />
-    </>
+    </div>
   )
 }
 

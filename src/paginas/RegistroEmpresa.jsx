@@ -223,7 +223,7 @@ export default function RegistroEmpresa() {
 
       <form
         className="formulario"
-        onSubmit={esUltimo ? enviar : (e) => e.preventDefault()}
+        onSubmit={(e) => e.preventDefault()}
         onKeyDown={evitarEnterAccidental}
         noValidate
       >
@@ -272,6 +272,10 @@ export default function RegistroEmpresa() {
         {paso === 2 && (
           <fieldset className="grupo">
             <legend>Representante</legend>
+            <p className="seccion__descripcion" style={{ marginTop: 0 }}>
+              Completa los datos del representante. La cuenta se crea solo al pulsar <strong>Crear cuenta y pagar</strong>, no
+              al avanzar desde el paso anterior.
+            </p>
             <Campo etiqueta="Nombres" error={errorDe('nombres')} className="campo--ancho">
               {(a11y) => <input {...a11y} {...controlEmpresa('nombres')} autoComplete="given-name" maxLength={100} />}
             </Campo>
@@ -302,7 +306,7 @@ export default function RegistroEmpresa() {
           </div>
 
           {esUltimo ? (
-            <button type="submit" className="boton" disabled={enviando}>
+            <button type="button" className="boton" disabled={enviando} onClick={enviar}>
               {enviando ? 'Creando cuenta…' : 'Crear cuenta y pagar'}
             </button>
           ) : (

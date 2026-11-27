@@ -503,10 +503,12 @@
 }
 
 .pie {
+  margin-top: auto;
   padding-block: 1.5rem;
   border-top: 1px solid var(--borde);
   color: var(--texto-suave);
   font-size: 0.9rem;
+  background: var(--fondo);
 }
 
 .pie__contenido,

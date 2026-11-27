@@ -19,6 +19,7 @@ const NOMBRES_PAGINAS = {
   '/empresa/registro': 'Registro de empresa',
   '/empresa': 'Mi empresa',
   '/empresa/informes/:id': 'Informe de empresa',
+  '/perfiles/:codigo/informe': 'Informe de perfil público',
   '/mi-cuenta': 'Mi cuenta',
   '/postulaciones/:id': 'Detalle de postulación',
   '/postulaciones/:id/test': 'Evaluación en línea',

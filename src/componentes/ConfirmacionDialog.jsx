@@ -10,6 +10,7 @@ export default function ConfirmacionDialog({
   onCancelar,
   confirmarPeligroso = false,
   confirmando = false,
+  estiloCapa = undefined,
 }) {
   useEffect(() => {
     if (!abierto) return
@@ -23,7 +24,12 @@ export default function ConfirmacionDialog({
   if (!abierto) return null
 
   return (
-    <div className="banco__dialogo" role="presentation" onClick={confirmando ? undefined : onCancelar}>
+    <div
+      className="banco__dialogo"
+      style={estiloCapa}
+      role="presentation"
+      onClick={confirmando ? undefined : onCancelar}
+    >
       <div
         className="banco__dialogo-caja confirmacion-dialogo"
         role="dialog"
