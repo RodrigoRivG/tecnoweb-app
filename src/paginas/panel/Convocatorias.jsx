@@ -310,7 +310,7 @@ export default function Convocatorias() {
         </div>
 
         <button type="button" className="boton boton--primario" onClick={abrirCrear}>
-          <Plus size={16} style={{ marginRight: '0.35rem', verticalAlign: 'middle' }} />
+          <Plus size={16} aria-hidden="true" />
           Nueva Convocatoria
         </button>
       </header>

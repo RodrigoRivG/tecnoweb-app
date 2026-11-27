@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   actualizarCarrera,
   crearCarrera,
@@ -146,6 +146,8 @@ export default function Carreras() {
     return <ErrorCarga error={error} onReintentar={reintentar} />
   }
 
+  const formularioNuevoAbierto = mostrarFormulario && !editandoId
+
   return (
     <ListadoPanel
       titulo="Carreras"
@@ -154,9 +156,14 @@ export default function Carreras() {
         <button
           type="button"
           className="boton"
-          onClick={mostrarFormulario && !editandoId ? cerrarFormulario : abrirCrear}
+          onClick={formularioNuevoAbierto ? cerrarFormulario : abrirCrear}
         >
-          {mostrarFormulario && !editandoId ? 'Cancelar' : 'Nueva carrera'}
+          {formularioNuevoAbierto ? 'Cancelar' : (
+            <>
+              <Plus size={16} aria-hidden="true" />
+              Nueva carrera
+            </>
+          )}
         </button>
       }
       filas={carreras}

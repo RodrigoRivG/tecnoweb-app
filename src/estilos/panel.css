@@ -89,16 +89,42 @@
   color: var(--texto-suave);
 }
 
+.panel__herramientas:has(.panel__controles) {
+  align-items: center;
+}
+
 .panel__buscar {
-  flex: 1 1 220px;
-  max-width: 320px;
+  position: relative;
+  display: flex;
+  flex: 1 1 12rem;
+  width: 16rem;
+  min-width: 0;
+}
+
+.panel__buscar svg {
+  position: absolute;
+  inset-inline-start: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+
+.panel__buscar input {
+  padding-inline-start: 2.5rem;
 }
 
 .panel__controles {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
   gap: 0.75rem;
+}
+
+.panel__controles > .boton {
+  flex: none;
 }
 
 .panel__formulario {
@@ -263,10 +289,6 @@ td.numero .tabla__acciones {
 
   .panel__enlace.active {
     box-shadow: inset 0 -3px 0 var(--primario);
-  }
-
-  .panel__buscar {
-    max-width: none;
   }
 }
 

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { obtenerConvocatorias, obtenerFacultades, obtenerPerfiles } from '../api/publico.js'
 import { ErrorCarga, Esqueleto, Vacio } from '../componentes/Estado.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
@@ -14,14 +14,29 @@ const PASOS = [
 ]
 
 export default function Bienvenida() {
+  const [parametros] = useSearchParams()
+  const busqueda = parametros.get('q')?.trim() ?? ''
+
+  return <ContenidoBienvenida key={busqueda} busqueda={busqueda} />
+}
+
+function ContenidoBienvenida({ busqueda }) {
   const { usuario } = useSesion()
   const [filtros, setFiltros] = useState({ facultad_id: '', carrera_id: '' })
   const [pagina, setPagina] = useState(1)
   const [soloTop, setSoloTop] = useState(false)
+  const tituloResultados = useRef(null)
+
+  useEffect(() => {
+    if (busqueda) {
+      window.scrollTo(0, 0)
+      tituloResultados.current?.focus({ preventScroll: true })
+    }
+  }, [busqueda])
 
   const facultades = useConsulta(obtenerFacultades)
-  const convocatorias = useConsulta(obtenerConvocatorias, filtros)
-  const perfiles = useConsulta(obtenerPerfiles, { ...filtros, solo_top: soloTop, page: pagina })
+  const convocatorias = useConsulta(obtenerConvocatorias, { ...filtros, q: busqueda })
+  const perfiles = useConsulta(obtenerPerfiles, { ...filtros, q: busqueda, solo_top: soloTop, page: pagina })
 
   const carreras = (facultades.datos ?? [])
     .filter((facultad) => !filtros.facultad_id || String(facultad.id) === filtros.facultad_id)
@@ -43,40 +58,16 @@ export default function Bienvenida() {
 
   return (
     <>
-      <section className="portada">
-        <div className="contenedor portada__contenido">
-          <p className="portada__antetitulo">Bolsa de talento para egresados</p>
-          <h1>Tu primer paso profesional empieza aquí</h1>
-          <p className="portada__texto">
-            Postula a las convocatorias de tu carrera, demuestra lo que sabes y conecta con las empresas que buscan
-            nuevos profesionales.
-          </p>
-          <div className="portada__acciones">
-            {usuario ? (
-              <Link to={inicioDe(usuario)} className="boton">{puedeEntrarAlPanel(usuario) ? 'Ir al panel' : 'Ir a mi cuenta'}</Link>
-            ) : (
-              <>
-                <Link to="/registro" className="boton">Registrarme como egresado</Link>
-                <Link to="/iniciar-sesion" className="boton boton--secundario">Iniciar sesión</Link>
-              </>
-            )}
-            <a href="#convocatorias" className="boton boton--secundario">Ver convocatorias</a>
+      {busqueda ? (
+        <section className="contenedor seccion" aria-labelledby="titulo-resultados">
+          <div className="seccion__cabecera">
+            <h1 id="titulo-resultados" className="titulo-pagina" ref={tituloResultados} tabIndex={-1}>
+              Resultados para «{busqueda}»
+            </h1>
+            <Link to="/" className="enlace-accion">Limpiar búsqueda</Link>
           </div>
-        </div>
-      </section>
-
-      <section className="contenedor seccion" aria-labelledby="titulo-pasos">
-        <h2 id="titulo-pasos">Cómo funciona</h2>
-        <ol className="pasos">
-          {PASOS.map((paso, indice) => (
-            <li key={paso.titulo} className="paso">
-              <span className="paso__numero" aria-hidden="true">{indice + 1}</span>
-              <h3>{paso.titulo}</h3>
-              <p>{paso.texto}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+        </section>
+      ) : <PortadaBienvenida usuario={usuario} />}
 
       <div className="contenedor">
         <form className="filtros" aria-label="Filtrar convocatorias y perfiles" onSubmit={(e) => e.preventDefault()}>
@@ -89,6 +80,7 @@ export default function Bienvenida() {
               ))}
             </select>
           </label>
+
           <label className="filtros__campo">
             <span>Carrera</span>
             <select value={filtros.carrera_id} onChange={cambiarCarrera} disabled={!facultades.datos}>
@@ -102,7 +94,7 @@ export default function Bienvenida() {
         {facultades.error && <ErrorCarga error={facultades.error} onReintentar={facultades.reintentar} />}
       </div>
 
-      <section id="convocatorias" className="contenedor seccion" aria-labelledby="titulo-convocatorias">
+      <section id="convocatorias" className="contenedor seccion" aria-labelledby="titulo-convocatorias" aria-busy={convocatorias.cargando}>
         <h2 id="titulo-convocatorias">Convocatorias abiertas</h2>
 
         {convocatorias.error && <ErrorCarga error={convocatorias.error} onReintentar={convocatorias.reintentar} />}
@@ -110,7 +102,9 @@ export default function Bienvenida() {
         {convocatorias.datos === null && !convocatorias.error && <Esqueleto />}
 
         {convocatorias.datos?.length === 0 && (
-          <Vacio titulo="No hay convocatorias abiertas con estos filtros">Vuelve pronto o prueba con otra carrera.</Vacio>
+          <Vacio titulo={busqueda ? 'No se encontraron convocatorias abiertas' : 'No hay convocatorias abiertas con estos filtros'}>
+            {busqueda ? 'Prueba con otro nombre, carrera o facultad.' : 'Vuelve pronto o prueba con otra carrera.'}
+          </Vacio>
         )}
 
         {convocatorias.datos?.length > 0 && (
@@ -150,9 +144,9 @@ export default function Bienvenida() {
         )}
       </section>
 
-      <section className="contenedor seccion" aria-labelledby="titulo-perfiles">
+      <section className="contenedor seccion" aria-labelledby="titulo-perfiles" aria-busy={perfiles.cargando}>
         <div className="seccion__cabecera">
-          <h2 id="titulo-perfiles">Perfiles destacados</h2>
+          <h2 id="titulo-perfiles">{busqueda ? 'Perfiles publicados' : 'Perfiles destacados'}</h2>
           <label className="interruptor">
             <input
               type="checkbox"
@@ -175,8 +169,8 @@ export default function Bienvenida() {
         {perfiles.datos === null && !perfiles.error && <Esqueleto cantidad={2} />}
 
         {perfiles.datos?.data.length === 0 && (
-          <Vacio titulo="Aún no hay perfiles publicados">
-            Los perfiles aparecen aquí cuando se publican los resultados de una convocatoria.
+          <Vacio titulo={busqueda ? 'No se encontraron perfiles publicados' : 'Aún no hay perfiles publicados'}>
+            {busqueda ? 'Prueba con otro código de candidato.' : 'Los perfiles aparecen aquí cuando se publican los resultados de una convocatoria.'}
           </Vacio>
         )}
 
@@ -236,6 +230,47 @@ export default function Bienvenida() {
             )}
           </>
         )}
+      </section>
+    </>
+  )
+}
+
+function PortadaBienvenida({ usuario }) {
+  return (
+    <>
+      <section className="portada">
+        <div className="contenedor portada__contenido">
+          <p className="portada__antetitulo">Bolsa de talento para egresados</p>
+          <h1>Tu primer paso profesional empieza aquí</h1>
+          <p className="portada__texto">
+            Postula a las convocatorias de tu carrera, demuestra lo que sabes y conecta con las empresas que buscan
+            nuevos profesionales.
+          </p>
+          <div className="portada__acciones">
+            {usuario ? (
+              <Link to={inicioDe(usuario)} className="boton">{puedeEntrarAlPanel(usuario) ? 'Ir al panel' : 'Ir a mi cuenta'}</Link>
+            ) : (
+              <>
+                <Link to="/registro" className="boton">Registrarme como egresado</Link>
+                <Link to="/iniciar-sesion" className="boton boton--secundario">Iniciar sesión</Link>
+              </>
+            )}
+            <a href="#convocatorias" className="boton boton--secundario">Ver convocatorias</a>
+          </div>
+        </div>
+      </section>
+
+      <section className="contenedor seccion" aria-labelledby="titulo-pasos">
+        <h2 id="titulo-pasos">Cómo funciona</h2>
+        <ol className="pasos">
+          {PASOS.map((paso, indice) => (
+            <li key={paso.titulo} className="paso">
+              <span className="paso__numero" aria-hidden="true">{indice + 1}</span>
+              <h3>{paso.titulo}</h3>
+              <p>{paso.texto}</p>
+            </li>
+          ))}
+        </ol>
       </section>
     </>
   )

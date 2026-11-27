@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   actualizarFacultad,
   crearFacultad,
@@ -126,6 +126,7 @@ export default function Facultades() {
   }
 
   const lista = facultades ?? []
+  const formularioNuevoAbierto = mostrarFormulario && !editandoId
 
   return (
     <ListadoPanel
@@ -135,9 +136,14 @@ export default function Facultades() {
         <button
           type="button"
           className="boton"
-          onClick={mostrarFormulario && !editandoId ? cerrarFormulario : abrirCrear}
+          onClick={formularioNuevoAbierto ? cerrarFormulario : abrirCrear}
         >
-          {mostrarFormulario && !editandoId ? 'Cancelar' : 'Nueva facultad'}
+          {formularioNuevoAbierto ? 'Cancelar' : (
+            <>
+              <Plus size={16} aria-hidden="true" />
+              Nueva facultad
+            </>
+          )}
         </button>
       }
       filas={lista}

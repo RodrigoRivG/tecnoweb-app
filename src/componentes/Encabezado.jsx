@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, LogOut, UserRound } from 'lucide-react'
-import { Link, NavLink, useNavigate } from 'react-router'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { esEmpresa, inicioDe, puedeEntrarAlPanel } from '../utilidades/roles.js'
 import AjustesApariencia from './AjustesApariencia.jsx'
+import BusquedaGlobal from './BusquedaGlobal.jsx'
 
 function iniciales(texto) {
   return texto
@@ -17,6 +18,7 @@ function iniciales(texto) {
 export default function Encabezado() {
   const { usuario, cerrarSesion } = useSesion()
   const navegar = useNavigate()
+  const enInicio = useLocation().pathname === '/'
   const [abierto, setAbierto] = useState(false)
   const menuCuenta = useRef(null)
 
@@ -59,7 +61,7 @@ export default function Encabezado() {
   const tieneEmpresa = esEmpresa(usuario)
 
   return (
-    <header className={`encabezado ${abierto ? 'encabezado--abierto' : ''}`}>
+    <header className={`encabezado${abierto ? ' encabezado--abierto' : ''}${enInicio ? ' encabezado--con-busqueda' : ''}`}>
       <div className="contenedor encabezado__fila">
         <Link to="/" className="marca" onClick={cerrarMenus}>
           <span className="marca__simbolo" aria-hidden="true">T</span>
@@ -133,6 +135,7 @@ export default function Encabezado() {
 
         <AjustesApariencia />
       </div>
+      {enInicio && <BusquedaGlobal onBuscar={cerrarMenus} />}
     </header>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Search } from 'lucide-react'
 
 /** Título, buscador, acciones opcionales y tabla filtrada de una sección del panel. */
 export default function ListadoPanel({ titulo, descripcion, acciones, children, filas, textoDe, columnas, fila }) {
@@ -17,6 +18,7 @@ export default function ListadoPanel({ titulo, descripcion, acciones, children, 
         <div className="panel__controles">
           <label className="panel__buscar">
             <span className="visualmente-oculto">Buscar {nombre}</span>
+            <Search size={18} aria-hidden="true" />
             <input
               type="search"
               value={consulta}
