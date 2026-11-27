@@ -30,7 +30,6 @@ const FORMULARIO_USUARIO_INICIAL = {
   correo: '',
   password: '',
   rol_id: '',
-  carrera_ids: [],
 }
 
 function claseEstado(estado) {
@@ -63,7 +62,6 @@ export default function Usuarios() {
   const [aviso, setAviso] = useState(null)
 
   const [rolesCatalogo, setRolesCatalogo] = useState([])
-  const [carrerasCatalogo, setCarrerasCatalogo] = useState([])
   const [editandoId, setEditandoId] = useState(null)
   const [actualizandoUsuarioId, setActualizandoUsuarioId] = useState(null)
 
@@ -74,7 +72,6 @@ export default function Usuarios() {
       const data = await obtenerUsuariosAdmin()
       setUsuarios(data.data ?? [])
       setRolesCatalogo(data.roles ?? [])
-      setCarrerasCatalogo(data.carreras ?? [])
     } catch (err) {
       setErrorUsuarios(err.message || 'Error al cargar usuarios.')
     } finally {
@@ -90,7 +87,6 @@ export default function Usuarios() {
         if (activo) {
           setUsuarios(data.data ?? [])
           setRolesCatalogo(data.roles ?? [])
-          setCarrerasCatalogo(data.carreras ?? [])
           setCargandoUsuarios(false)
         }
       })
@@ -159,7 +155,6 @@ export default function Usuarios() {
       correo: cuenta.correo ?? '',
       password: '',
       rol_id: cuenta.rol?.id ? String(cuenta.rol.id) : '',
-      carrera_ids: cuenta.carrera_ids ?? [],
     })
     setErroresFormUsuario({})
     setMostrarModalUsuario(true)
@@ -171,13 +166,11 @@ export default function Usuarios() {
     setErroresFormUsuario({})
     setAviso(null)
 
-    const rol = rolesCatalogo.find((item) => String(item.id) === String(formUsuario.rol_id))
     const cuerpo = {
       ...formUsuario,
       rol_id: parseInt(formUsuario.rol_id, 10),
       apellido_materno: formUsuario.apellido_materno || null,
       telefono: formUsuario.telefono || null,
-      carrera_ids: rol?.alcance_carrera ? formUsuario.carrera_ids.map((id) => parseInt(id, 10)) : [],
     }
 
     if (editandoId && !cuerpo.password) {
@@ -558,7 +551,7 @@ export default function Usuarios() {
                     className="campo__control"
                     required
                     value={formUsuario.rol_id}
-                    onChange={(e) => setFormUsuario({ ...formUsuario, rol_id: e.target.value, carrera_ids: [] })}
+                    onChange={(e) => setFormUsuario({ ...formUsuario, rol_id: e.target.value })}
                   >
                     <option value="">Elige un rol interno</option>
                     {rolesCatalogo
@@ -571,36 +564,6 @@ export default function Usuarios() {
                   </select>
                 </Campo>
               </div>
-
-              {rolesCatalogo.find((rol) => String(rol.id) === String(formUsuario.rol_id))?.alcance_carrera && (
-                <fieldset style={{ marginTop: '0.75rem', border: '1px solid var(--borde)', borderRadius: '8px', padding: '0.75rem' }}>
-                  <legend style={{ padding: '0 0.35rem', fontSize: '0.9rem' }}>Carreras que atiende</legend>
-                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: 'var(--texto-suave)' }}>
-                    Opcional. Si marcas alguna, solo verá postulaciones de esas carreras.
-                  </p>
-                  <div style={{ maxHeight: '160px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {carrerasCatalogo.map((carrera) => (
-                      <label key={carrera.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
-                        <input
-                          type="checkbox"
-                          checked={formUsuario.carrera_ids.map(String).includes(String(carrera.id))}
-                          onChange={(e) => {
-                            const id = carrera.id
-                            setFormUsuario((prev) => ({
-                              ...prev,
-                              carrera_ids: e.target.checked
-                                ? [...prev.carrera_ids, id]
-                                : prev.carrera_ids.filter((actual) => String(actual) !== String(id)),
-                            }))
-                          }}
-                        />
-                        <span>{carrera.nombre}{carrera.facultad ? ` · ${carrera.facultad}` : ''}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {erroresFormUsuario.carrera_ids?.[0] && <p className="campo__error">{erroresFormUsuario.carrera_ids[0]}</p>}
-                </fieldset>
-              )}
 
               <div style={{ marginTop: '0.75rem' }}>
                 <Campo etiqueta="Correo Electrónico Institucional *" error={erroresFormUsuario.correo?.[0]}>

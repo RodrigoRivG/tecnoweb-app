@@ -132,7 +132,6 @@ export default function RolesPermisos() {
         nombre: formRol.nombre.trim(),
         descripcion: formRol.descripcion.trim() || null,
         es_panel: formRol.es_panel,
-        alcance_carrera: formRol.alcance_carrera,
       })
       setDatosRbac((prev) => (prev ? { ...prev, roles: [...prev.roles, creado] } : prev))
       setRolSeleccionadoId(creado.id)
@@ -248,14 +247,6 @@ export default function RolesPermisos() {
               />
               Rol de gestión interna (entra al panel)
             </label>
-            <label style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-              <input
-                type="checkbox"
-                checked={formRol.alcance_carrera}
-                onChange={(e) => setFormRol({ ...formRol, alcance_carrera: e.target.checked })}
-              />
-              Se limita por carrera
-            </label>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
             <button type="submit" className="boton boton--primario" disabled={guardandoRol}>
@@ -342,7 +333,6 @@ export default function RolesPermisos() {
                   <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--texto-suave)' }}>
                     {rolActual.descripcion || 'Sin descripción configurada.'}
                     {rolActual.es_panel ? ' Entra al panel.' : ' No entra al panel.'}
-                    {rolActual.alcance_carrera ? ' Se puede limitar por carrera.' : ''}
                   </p>
                 </div>
 
