@@ -4,6 +4,28 @@ import { registrarSolicitudEmpresa } from '../api/empresa.js'
 import Campo from '../componentes/Campo.jsx'
 import PasosFormulario from '../componentes/PasosFormulario.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
+import {
+  validarCiExpedido,
+  validarCiNumero,
+  validarCorreosDistintos,
+  validarFechaMayoria,
+  FECHA_NACIMIENTO_MINIMA,
+  validarNit,
+  validarPassword,
+  validarTelefonoBolivia,
+} from '../utilidades/validacionCuenta.js'
+
+const DEPARTAMENTOS = [
+  ['LP', 'La Paz'],
+  ['CB', 'Cochabamba'],
+  ['SC', 'Santa Cruz'],
+  ['OR', 'Oruro'],
+  ['PT', 'Potosí'],
+  ['CH', 'Chuquisaca'],
+  ['TJ', 'Tarija'],
+  ['BE', 'Beni'],
+  ['PD', 'Pando'],
+]
 
 const PASOS = [
   { titulo: 'Acceso', descripcion: 'Correo y contraseña para el panel de empresa.' },
@@ -14,7 +36,7 @@ const PASOS = [
 const CAMPOS_POR_PASO = [
   ['correo_contacto', 'password', 'password_confirmation'],
   ['razon_social', 'nit', 'correo_empresa', 'telefono'],
-  ['nombres', 'apellido_paterno', 'ci_numero', 'fecha_nacimiento'],
+  ['nombres', 'apellido_paterno', 'ci_numero', 'ci_expedido', 'fecha_nacimiento'],
 ]
 
 const ULTIMO_PASO = PASOS.length - 1
@@ -36,17 +58,14 @@ function normalizarErroresApi(errores) {
 
 function validarPaso(paso, empresa) {
   const errores = {}
-  const hoy = new Date().toISOString().slice(0, 10)
 
   if (paso === 0) {
     if (!empresa.correo_contacto?.trim()) errores.correo_contacto = 'Ingresa el correo de acceso.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(empresa.correo_contacto)) {
       errores.correo_contacto = 'Correo no válido.'
     }
-    if (!empresa.password) errores.password = 'Ingresa una contraseña.'
-    else if (empresa.password.length < 8 || !/[A-Za-z]/.test(empresa.password) || !/\d/.test(empresa.password)) {
-      errores.password = 'Mínimo 8 caracteres, con letras y números.'
-    }
+    const pass = validarPassword(empresa.password)
+    if (pass) errores.password = pass
     if (!empresa.password_confirmation) errores.password_confirmation = 'Repite la contraseña.'
     else if (empresa.password !== empresa.password_confirmation) {
       errores.password_confirmation = 'Las contraseñas no coinciden.'
@@ -55,19 +74,27 @@ function validarPaso(paso, empresa) {
 
   if (paso === 1) {
     if (!empresa.razon_social?.trim()) errores.razon_social = 'Ingresa la razón social.'
-    if (!empresa.nit?.trim()) errores.nit = 'Ingresa el NIT.'
+    const nit = validarNit(empresa.nit)
+    if (nit) errores.nit = nit
     if (!empresa.correo_empresa?.trim()) errores.correo_empresa = 'Ingresa el correo de la empresa.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(empresa.correo_empresa)) {
       errores.correo_empresa = 'Correo no válido.'
     }
+    const distinto = validarCorreosDistintos(empresa.correo_empresa, empresa.correo_contacto)
+    if (distinto) errores.correo_empresa = distinto
+    const tel = validarTelefonoBolivia(empresa.telefono)
+    if (tel) errores.telefono = tel
   }
 
   if (paso === 2) {
     if (!empresa.nombres?.trim()) errores.nombres = 'Ingresa los nombres del representante.'
     if (!empresa.apellido_paterno?.trim()) errores.apellido_paterno = 'Ingresa el apellido.'
-    if (!empresa.ci_numero?.trim()) errores.ci_numero = 'Ingresa la cédula.'
-    if (!empresa.fecha_nacimiento) errores.fecha_nacimiento = 'Indica la fecha de nacimiento.'
-    else if (empresa.fecha_nacimiento >= hoy) errores.fecha_nacimiento = 'La fecha debe ser anterior a hoy.'
+    const ci = validarCiNumero(empresa.ci_numero)
+    if (ci) errores.ci_numero = ci
+    const expedido = validarCiExpedido(empresa.ci_expedido)
+    if (expedido) errores.ci_expedido = expedido
+    const fecha = validarFechaMayoria(empresa.fecha_nacimiento)
+    if (fecha) errores.fecha_nacimiento = fecha
   }
 
   return errores
@@ -100,6 +127,7 @@ export default function RegistroEmpresa() {
     nombres: '',
     apellido_paterno: '',
     ci_numero: '',
+    ci_expedido: '',
     fecha_nacimiento: '',
     correo_contacto: '',
     password: '',
@@ -257,14 +285,14 @@ export default function RegistroEmpresa() {
             <Campo etiqueta="Razón social" error={errorDe('razon_social')} className="campo--ancho">
               {(a11y) => <input {...a11y} {...controlEmpresa('razon_social')} maxLength={200} />}
             </Campo>
-            <Campo etiqueta="NIT" error={errorDe('nit')}>
-              {(a11y) => <input {...a11y} {...controlEmpresa('nit')} maxLength={20} />}
+            <Campo etiqueta="NIT" error={errorDe('nit')} ayuda="Solo dígitos, entre 7 y 15.">
+              {(a11y) => <input {...a11y} {...controlEmpresa('nit')} inputMode="numeric" maxLength={15} />}
             </Campo>
             <Campo etiqueta="Correo de la empresa" error={errorDe('correo_empresa')} className="campo--ancho">
               {(a11y) => <input {...a11y} {...controlEmpresa('correo_empresa')} type="email" maxLength={190} />}
             </Campo>
-            <Campo etiqueta="Teléfono" opcional error={errorDe('telefono')}>
-              {(a11y) => <input {...a11y} {...controlEmpresa('telefono')} type="tel" maxLength={30} />}
+            <Campo etiqueta="Teléfono" opcional error={errorDe('telefono')} ayuda="7 u 8 dígitos (Bolivia).">
+              {(a11y) => <input {...a11y} {...controlEmpresa('telefono')} type="tel" inputMode="numeric" maxLength={8} />}
             </Campo>
           </fieldset>
         )}
@@ -287,8 +315,27 @@ export default function RegistroEmpresa() {
             <Campo etiqueta="Cédula de identidad" error={errorDe('ci_numero')}>
               {(a11y) => <input {...a11y} {...controlEmpresa('ci_numero')} inputMode="numeric" maxLength={15} />}
             </Campo>
+            <Campo etiqueta="Expedido en" error={errorDe('ci_expedido')}>
+              {(a11y) => (
+                <select {...a11y} {...controlEmpresa('ci_expedido')}>
+                  <option value="">Selecciona el departamento</option>
+                  {DEPARTAMENTOS.map(([sigla, nombre]) => (
+                    <option key={sigla} value={sigla}>
+                      {nombre}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Campo>
             <Campo etiqueta="Fecha de nacimiento" error={errorDe('fecha_nacimiento')}>
-              {(a11y) => <input {...a11y} {...controlEmpresa('fecha_nacimiento')} type="date" />}
+              {(a11y) => (
+                <input
+                  {...a11y}
+                  {...controlEmpresa('fecha_nacimiento')}
+                  type="date"
+                  min={FECHA_NACIMIENTO_MINIMA}
+                />
+              )}
             </Campo>
           </fieldset>
         )}

@@ -17,6 +17,7 @@ import {
 import Campo from '../../componentes/Campo.jsx'
 import { ErrorCarga, Esqueleto } from '../../componentes/Estado.jsx'
 import { useSesion } from '../../sesion/SesionContext.jsx'
+import { validarCiNumero, validarFechaMayoria, validarPassword } from '../../utilidades/validacionCuenta.js'
 import { formatearFecha } from '../../utilidades/formato.js'
 import { tienePermiso } from '../../utilidades/roles.js'
 
@@ -29,6 +30,7 @@ const FORMULARIO_USUARIO_INICIAL = {
   telefono: '',
   correo: '',
   password: '',
+  password_confirmation: '',
   rol_id: '',
 }
 
@@ -154,14 +156,48 @@ export default function Usuarios() {
       telefono: cuenta.persona?.telefono ?? '',
       correo: cuenta.correo ?? '',
       password: '',
+      password_confirmation: '',
       rol_id: cuenta.rol?.id ? String(cuenta.rol.id) : '',
     })
     setErroresFormUsuario({})
     setMostrarModalUsuario(true)
   }
 
+  function validarFormularioUsuario() {
+    const locales = {}
+    if (!formUsuario.nombres?.trim()) locales.nombres = ['Ingresa los nombres.']
+    if (!formUsuario.apellido_paterno?.trim()) locales.apellido_paterno = ['Ingresa el apellido paterno.']
+    const ci = validarCiNumero(formUsuario.ci_numero)
+    if (ci) locales.ci_numero = [ci]
+    const fecha = validarFechaMayoria(formUsuario.fecha_nacimiento)
+    if (fecha) locales.fecha_nacimiento = [fecha]
+    if (!formUsuario.correo?.trim()) locales.correo = ['Ingresa el correo.']
+    if (!formUsuario.rol_id) locales.rol_id = ['Elige un rol.']
+    const requierePass = !editandoId || Boolean(formUsuario.password?.trim())
+    const pass = validarPassword(formUsuario.password, {
+      requerido: !editandoId,
+      confirmacion: requierePass ? formUsuario.password_confirmation : undefined,
+    })
+    if (pass) locales.password = [pass]
+    if (!editandoId && !formUsuario.password_confirmation?.trim()) {
+      locales.password_confirmation = ['Repite la contraseña.']
+    } else if (
+      requierePass &&
+      formUsuario.password &&
+      formUsuario.password !== formUsuario.password_confirmation
+    ) {
+      locales.password_confirmation = ['Las contraseñas no coinciden.']
+    }
+    return locales
+  }
+
   async function guardarUsuario(e) {
     e.preventDefault()
+    const locales = validarFormularioUsuario()
+    if (Object.keys(locales).length > 0) {
+      setErroresFormUsuario(locales)
+      return
+    }
     setGuardandoUsuario(true)
     setErroresFormUsuario({})
     setAviso(null)
@@ -175,6 +211,7 @@ export default function Usuarios() {
 
     if (editandoId && !cuerpo.password) {
       delete cuerpo.password
+      delete cuerpo.password_confirmation
     }
 
     try {
@@ -579,18 +616,40 @@ export default function Usuarios() {
               </div>
 
               <div style={{ marginTop: '0.75rem' }}>
-                <Campo etiqueta={editandoId ? 'Nueva contraseña' : 'Contraseña temporal *'} error={erroresFormUsuario.password?.[0]}>
+                <Campo
+                  etiqueta={editandoId ? 'Nueva contraseña' : 'Contraseña temporal *'}
+                  error={erroresFormUsuario.password?.[0]}
+                >
                   <input
                     type="password"
                     required={!editandoId}
-                    minLength={editandoId && !formUsuario.password ? undefined : 6}
+                    minLength={editandoId && !formUsuario.password ? undefined : 8}
                     className="campo__control"
-                    placeholder={editandoId ? 'Déjala en blanco para no cambiarla' : 'Mínimo 6 caracteres'}
+                    placeholder={editandoId ? 'Déjala en blanco para no cambiarla' : 'Mínimo 8 caracteres, letras y números'}
                     value={formUsuario.password}
                     onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })}
                   />
                 </Campo>
               </div>
+
+              {(!editandoId || formUsuario.password) && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <Campo
+                    etiqueta={editandoId ? 'Confirmar nueva contraseña' : 'Confirmar contraseña *'}
+                    error={erroresFormUsuario.password_confirmation?.[0]}
+                  >
+                    <input
+                      type="password"
+                      required={!editandoId || Boolean(formUsuario.password)}
+                      className="campo__control"
+                      value={formUsuario.password_confirmation}
+                      onChange={(e) =>
+                        setFormUsuario({ ...formUsuario, password_confirmation: e.target.value })
+                      }
+                    />
+                  </Campo>
+                </div>
+              )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
                 <button

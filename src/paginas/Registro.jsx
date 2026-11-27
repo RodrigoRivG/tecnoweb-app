@@ -6,6 +6,11 @@ import Campo from '../componentes/Campo.jsx'
 import { ErrorCarga } from '../componentes/Estado.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { useConsulta } from '../utilidades/useConsulta.js'
+import {
+  FECHA_NACIMIENTO_MINIMA,
+  validarFechaMayoria,
+  validarTelefonoBolivia,
+} from '../utilidades/validacionCuenta.js'
 
 const DEPARTAMENTOS = [
   ['LP', 'La Paz'],
@@ -20,9 +25,6 @@ const DEPARTAMENTOS = [
 ]
 
 const ANIO_ACTUAL = new Date().getFullYear()
-const MAYORIA_EDAD = new Date(ANIO_ACTUAL - 18, new Date().getMonth(), new Date().getDate())
-  .toISOString()
-  .slice(0, 10)
 
 const PASOS = [
   { titulo: 'Acceso', descripcion: 'Correo y contraseña para iniciar sesión.' },
@@ -98,10 +100,10 @@ function validarPaso(paso, datos) {
     if (datos.ci_complemento && !/^[A-Z0-9]{0,3}$/i.test(datos.ci_complemento)) {
       errores.ci_complemento = 'Máximo 3 caracteres.'
     }
-    if (!datos.fecha_nacimiento) errores.fecha_nacimiento = 'Indica tu fecha de nacimiento.'
-    else if (datos.fecha_nacimiento > MAYORIA_EDAD) {
-      errores.fecha_nacimiento = 'Debes ser mayor de 18 años.'
-    }
+    const fecha = validarFechaMayoria(datos.fecha_nacimiento)
+    if (fecha) errores.fecha_nacimiento = fecha
+    const tel = validarTelefonoBolivia(datos.telefono)
+    if (tel) errores.telefono = tel
   }
 
   if (paso === 2) {
@@ -325,10 +327,20 @@ export default function Registro() {
             </div>
 
             <Campo etiqueta="Fecha de nacimiento" error={errores.fecha_nacimiento}>
-              {(a11y) => <input {...a11y} {...control('fecha_nacimiento')} type="date" autoComplete="bday" />}
+              {(a11y) => (
+                <input
+                  {...a11y}
+                  {...control('fecha_nacimiento')}
+                  type="date"
+                  autoComplete="bday"
+                  min={FECHA_NACIMIENTO_MINIMA}
+                />
+              )}
             </Campo>
-            <Campo etiqueta="Teléfono" error={errores.telefono} opcional>
-              {(a11y) => <input {...a11y} {...control('telefono')} type="tel" autoComplete="tel" maxLength={20} />}
+            <Campo etiqueta="Teléfono" error={errores.telefono} opcional ayuda="7 u 8 dígitos (Bolivia).">
+              {(a11y) => (
+                <input {...a11y} {...control('telefono')} type="tel" autoComplete="tel" inputMode="numeric" maxLength={8} />
+              )}
             </Campo>
           </fieldset>
         )}
