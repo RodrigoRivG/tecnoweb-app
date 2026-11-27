@@ -1,0 +1,78 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Publicar en el servidor (requiere backend real configurado)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.20.0'
+          cache: npm
+      - run: npm ci
+      - name: Compilar
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'http://localhost:8000' }}
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
+        run: npm run build
+      - name: Empaquetar frontend y reglas de publicacion
+        run: |
+          cp .github/deployment/project.htaccess dist/.project.htaccess
+          tar -czf "$RUNNER_TEMP/frontend.tar.gz" -C dist .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-release
+          path: ${{ runner.temp }}/frontend.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.deploy) ||
+       (github.event_name == 'push' && vars.AUTO_DEPLOY == 'true'))
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-release
+          path: ${{ runner.temp }}
+      - name: Comprobar y desplegar
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
+        run: bash .github/scripts/deploy.sh

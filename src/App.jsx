@@ -94,7 +94,7 @@ function ContenidoApp() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
       <SesionProvider>
         <ContenidoApp />
       </SesionProvider>
