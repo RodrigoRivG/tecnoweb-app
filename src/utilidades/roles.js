@@ -7,6 +7,7 @@ export const SECCIONES_PANEL = [
   { ruta: '/panel/postulaciones', titulo: 'Postulaciones', permiso: 'postulaciones.ver' },
   { ruta: '/panel/usuarios', titulo: 'Usuarios', permiso: ['usuarios.ver', 'usuarios.gestionar'] },
   { ruta: '/panel/roles-permisos', titulo: 'Roles y Permisos (RBAC)', permiso: 'permisos.gestionar' },
+  { ruta: '/panel/bitacora', titulo: 'Bitácora de accesos', permiso: 'bitacora.ver' },
 ]
 
 export function esAdmin(usuario) {

@@ -131,6 +131,20 @@
   margin-bottom: 1.5rem;
 }
 
+.bitacora__filtros {
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.bitacora__filtros .filtros__campo {
+  flex-basis: 10rem;
+  min-width: 0;
+}
+
+.bitacora__paginacion {
+  flex-wrap: wrap;
+}
+
 .tabla__acciones {
   display: inline-flex;
   justify-content: flex-end;

@@ -48,6 +48,10 @@ export async function obtenerRolesPermisosAdmin() {
   return (await pedir('/admin/roles-permisos')).data
 }
 
+export function obtenerBitacoraAdmin(filtros) {
+  return pedir('/admin/bitacora', { parametros: filtros })
+}
+
 export async function crearRolAdmin(datos) {
   return (await pedir('/admin/roles', { metodo: 'POST', cuerpo: datos })).data
 }

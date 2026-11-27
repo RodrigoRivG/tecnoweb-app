@@ -11,6 +11,7 @@ import Convocatorias from './paginas/panel/Convocatorias.jsx'
 import Facultades from './paginas/panel/Facultades.jsx'
 import PanelLayout, { InicioPanel } from './paginas/panel/PanelLayout.jsx'
 import BancoEvaluaciones from './paginas/panel/BancoEvaluaciones.jsx'
+import Bitacora from './paginas/panel/Bitacora.jsx'
 import Postulaciones from './paginas/panel/Postulaciones.jsx'
 import Usuarios from './paginas/panel/Usuarios.jsx'
 import RolesPermisos from './paginas/panel/RolesPermisos.jsx'
@@ -52,6 +53,7 @@ const rutas = createRoutesFromElements(
       <Route path="postulaciones/:id" element={<DetallePostulacion />} />
       <Route path="usuarios" element={<Usuarios />} />
       <Route path="roles-permisos" element={<RolesPermisos />} />
+      <Route path="bitacora" element={<Bitacora />} />
     </Route>
     <Route path="*" element={<NoEncontrada />} />
   </>,
