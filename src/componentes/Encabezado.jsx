@@ -86,7 +86,7 @@ export default function Encabezado() {
           <div className="encabezado__enlaces">
             <NavLink to="/" end className="enlace-nav">Inicio</NavLink>
             {tienePanel && <NavLink to="/panel" className="enlace-nav">Panel</NavLink>}
-            {tieneEmpresa && <NavLink to="/empresa" className="enlace-nav">Mi empresa</NavLink>}
+            {tieneEmpresa && <NavLink to="/empresa" className="enlace-nav">Mis vacantes</NavLink>}
             {!usuario && <NavLink to="/empresa/registro" className="enlace-nav">Empresas</NavLink>}
           </div>
 

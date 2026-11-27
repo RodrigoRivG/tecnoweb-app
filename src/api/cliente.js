@@ -126,12 +126,39 @@ export async function descargarArchivo(ruta, nombreArchivo = 'documento') {
   }
 
   const blob = await respuesta.blob()
+  const objetoUrl = URL.createObjectURL(blob)
   const enlace = document.createElement('a')
-  enlace.href = URL.createObjectURL(blob)
+  enlace.href = objetoUrl
   enlace.download = nombreArchivo
   document.body.appendChild(enlace)
   enlace.click()
   enlace.remove()
-  URL.revokeObjectURL(enlace.href)
+  URL.revokeObjectURL(objetoUrl)
+}
+
+/**
+ * Obtiene el archivo autenticado como Blob (vista previa, abrir en pestaña).
+ */
+export async function obtenerBlobDocumento(ruta) {
+  const url = new URL(`${URL_BASE}/api/v1${ruta}`)
+  const cabeceras = {}
+  const token = leerToken()
+
+  if (token) {
+    cabeceras.Authorization = `Bearer ${token}`
+  }
+
+  let respuesta
+  try {
+    respuesta = await fetch(url, { headers: cabeceras })
+  } catch {
+    throw new ErrorApi(0, 'Error al conectar para obtener el archivo.')
+  }
+
+  if (!respuesta.ok) {
+    throw new ErrorApi(respuesta.status, 'No se pudo obtener el archivo solicitado.')
+  }
+
+  return respuesta.blob()
 }
 

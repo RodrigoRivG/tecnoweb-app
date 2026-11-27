@@ -132,10 +132,162 @@ input[type='checkbox'] {
   gap: 0.75rem;
 }
 
+/* Registro por pasos */
+.registro-pasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: 1.25rem 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.registro-pasos__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.registro-pasos__boton {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.registro-pasos__boton:hover:not(:disabled):not(.registro-pasos__item--activo) {
+  border-color: var(--primario);
+  color: var(--texto);
+}
+
+.registro-pasos__boton:focus-visible {
+  outline: 2px solid var(--primario);
+  outline-offset: 2px;
+}
+
+.registro-pasos__boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.registro-pasos__item--activo {
+  border-color: var(--primario);
+  background: var(--primario-suave);
+  color: var(--primario);
+  font-weight: 600;
+}
+
+.registro-pasos__item--hecho {
+  border-color: var(--exito, #16a34a);
+  color: var(--exito, #16a34a);
+}
+
+.registro-pasos__numero {
+  display: grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--fondo);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.registro-pasos__item--activo .registro-pasos__numero {
+  background: var(--primario);
+  color: #fff;
+}
+
+.registro-pasos__leyenda {
+  margin: 0 0 1rem;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.registro-resumen {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.formulario__acciones--registro {
+  justify-content: space-between;
+}
+
+.formulario__acciones--registro .boton:last-child {
+  margin-left: auto;
+}
+
+.grupo__subtitulo {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.registro-candidato-bloque {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--borde);
+}
+
+.registro-candidato-bloque:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.registro-candidato-bloque__titulo {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.registro-resumen-seccion {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--borde);
+}
+
+.registro-resumen-lista {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.registro-resumen-lista li {
+  margin: 0.35rem 0;
+}
+
+.registro-paso-aviso {
+  margin: 0.75rem 0 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
 @media (max-width: 640px) {
   .grupo {
     grid-template-columns: 1fr;
     padding: 1.25rem 1rem;
+  }
+
+  .registro-candidato-bloque {
+    grid-template-columns: 1fr;
   }
 
   .fila-ci {

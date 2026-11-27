@@ -7,11 +7,15 @@ import { useConsulta } from '../../utilidades/useConsulta.js'
 
 const FILTROS = [
   { id: 'todas', etiqueta: 'Todas' },
-  { id: 'PENDIENTE_APROBACION', etiqueta: 'Pendientes de aprobación' },
+  { id: 'PENDIENTE_PAGO', etiqueta: 'Pendientes de pago' },
+  { id: 'PENDIENTE_CANDIDATOS', etiqueta: 'Pagadas — sin candidatos' },
+  { id: 'PENDIENTE_APROBACION', etiqueta: 'Legacy — aprobación' },
   { id: 'EN_CURSO', etiqueta: 'En curso' },
 ]
 
 const ESTADO = {
+  PENDIENTE_PAGO: { texto: 'SIN PAGO', clase: 'insignia--pendiente' },
+  PENDIENTE_CANDIDATOS: { texto: 'PAGADA', clase: 'insignia--pendiente' },
   PENDIENTE_APROBACION: { texto: 'PENDIENTE', clase: 'insignia--pendiente' },
   EN_CURSO: { texto: 'EN CURSO', clase: 'insignia--exito' },
 }

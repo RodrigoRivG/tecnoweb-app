@@ -6,6 +6,13 @@ import { useSesion } from '../sesion/SesionContext.jsx'
 import { formatearFecha, formatearPuntaje } from '../utilidades/formato.js'
 import { esCandidatoExterno } from '../utilidades/roles.js'
 import { useConsulta } from '../utilidades/useConsulta.js'
+import {
+  claseChipEtapa,
+  claseInsigniaEstado,
+  etiquetaEstadoPostulacion,
+  prefijoChipEtapa,
+  textoAccionPostulacion,
+} from '../utilidades/postulacionResumen.js'
 
 export default function MiCuenta() {
   const { usuario, cargando } = useSesion()
@@ -73,6 +80,7 @@ function CuentaEgresado() {
   const nombreCompleto = [persona?.nombres, persona?.apellido_paterno, persona?.apellido_materno].filter(Boolean).join(' ')
   const egresadoPrincipal = persona?.egresados?.[0]
   const egresadoPpa = egresadoPrincipal?.ppa
+  const tienePostulacionActiva = (postulacionesConsulta.datos?.length ?? 0) > 0
 
   async function manejarPostulacion(procesoId, nombreConvocatoria) {
     setPostulandoId(procesoId)
@@ -147,128 +155,19 @@ function CuentaEgresado() {
         </section>
       ))}
 
-      {/* PASO 2: Convocatorias abiertas y Filtro Eliminatorio de PPA */}
-      <section className="seccion" aria-labelledby="titulo-convocatorias-abiertas">
-        <div className="seccion__cabecera">
-          <div>
-            <h2 id="titulo-convocatorias-abiertas" style={{ fontSize: '1.4rem' }}>
-              Paso 2: Convocatorias disponibles para tu carrera
-            </h2>
-            <p className="seccion__descripcion">
-              Selecciona una convocatoria abierta. Para postular, el sistema aplica un <strong>filtro eliminatorio estricto</strong>:
-              tu PPA debe ser igual o superior al mínimo exigido por la facultad.
-            </p>
-          </div>
-        </div>
-
-        {convocatoriasConsulta.error && (
-          <ErrorCarga error={convocatoriasConsulta.error} onReintentar={convocatoriasConsulta.reintentar} />
-        )}
-
-        {convocatoriasConsulta.cargando && !convocatoriasConsulta.datos && <Esqueleto cantidad={2} />}
-
-        {convocatoriasConsulta.datos?.length === 0 && (
-          <Vacio titulo="No hay convocatorias abiertas para tu carrera en este momento">
-            Revisa periódicamente o consulta en la <Link to="/">página principal</Link>.
-          </Vacio>
-        )}
-
-        {convocatoriasConsulta.datos?.length > 0 && (
-          <ul className="rejilla" style={{ marginTop: '1rem' }}>
-            {convocatoriasConsulta.datos.map((convocatoria) => {
-              const cumplePpa = convocatoria.cumple_ppa
-              const yaPostulado = convocatoria.ya_postulado
-
-              return (
-                <li key={convocatoria.proceso_id} className="tarjeta convocatoria">
-                  <p className="convocatoria__facultad">{convocatoria.facultad.nombre}</p>
-                  <h3>{convocatoria.nombre}</h3>
-                  <p className="convocatoria__carrera">{convocatoria.carrera.nombre}</p>
-
-                  <dl className="datos">
-                    <div>
-                      <dt>Gestión</dt>
-                      <dd>{convocatoria.gestion}{convocatoria.numero ? ` · N.º ${convocatoria.numero}` : ''}</dd>
-                    </div>
-                    <div>
-                      <dt>Periodo de postulación</dt>
-                      <dd>
-                        {convocatoria.fecha_cierre
-                          ? `Hasta el ${formatearFecha(convocatoria.fecha_cierre)}`
-                          : `Desde el ${formatearFecha(convocatoria.fecha_apertura)}`}
-                      </dd>
-                    </div>
-                  </dl>
-
-                  {/* Comparativa del Filtro Eliminatorio de PPA */}
-                  <div className={`filtro-ppa ${cumplePpa ? 'filtro-ppa--cumple' : 'filtro-ppa--rechazo'}`}>
-                    <div className="filtro-ppa__comparacion">
-                      <span>Mínimo exigido: {formatearPuntaje(convocatoria.ppa_minimo)}</span>
-                      <span>Tu PPA: {formatearPuntaje(egresadoPpa)}</span>
-                    </div>
-
-                    {cumplePpa ? (
-                      <p className="filtro-ppa__estado">
-                        <span aria-hidden="true">✓</span> Calificas con el PPA mínimo exigido.
-                      </p>
-                    ) : (
-                      <div className="filtro-ppa__estado" style={{ display: 'block' }}>
-                        <p style={{ margin: 0, fontWeight: 600 }}>
-                          ⛔ Tu PPA ({formatearPuntaje(egresadoPpa)}) no alcanza el mínimo de {formatearPuntaje(convocatoria.ppa_minimo)} exigido por la facultad.
-                        </p>
-                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
-                          Filtro eliminatorio: no cumples el requisito académico para postular a este proceso.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="convocatoria__pie">
-                    {yaPostulado ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span className="insignia insignia--exito">✓ Postulado</span>
-                        {convocatoria.postulacion_id && (
-                          <Link to={`/postulaciones/${convocatoria.postulacion_id}`} className="boton boton--secundario boton--chico">
-                            Ver documentos →
-                          </Link>
-                        )}
-                      </div>
-                    ) : cumplePpa ? (
-                      <button
-                        type="button"
-                        className="boton"
-                        disabled={postulandoId === convocatoria.proceso_id}
-                        onClick={() => manejarPostulacion(convocatoria.proceso_id, convocatoria.nombre)}
-                      >
-                        {postulandoId === convocatoria.proceso_id ? 'Procesando postulación…' : 'Postularme a esta convocatoria'}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="boton boton--secundario"
-                        disabled
-                        title="Tu PPA no alcanza el mínimo exigido por la facultad"
-                      >
-                        PPA insuficiente para postular
-                      </button>
-                    )}
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
-
-      {/* Mis Postulaciones Activas */}
+      {/* Mis Postulaciones Activas (primero si ya hay una en curso) */}
       {postulacionesConsulta.datos?.length > 0 && (
-        <section className="seccion" aria-labelledby="titulo-mis-postulaciones" style={{ marginTop: '3rem' }}>
+        <section className="seccion" aria-labelledby="titulo-mis-postulaciones" style={{ marginBottom: '2.5rem' }}>
           <h2 id="titulo-mis-postulaciones" style={{ fontSize: '1.4rem' }}>
-            Mis Postulaciones Activas
+            Mis postulaciones activas
           </h2>
           <p className="seccion__descripcion">
-            Procesos a los que ya te has postulado. El identificador mostrado es tu <strong>código seudónimo</strong> para proteger tu privacidad.
+            Tu avance real en el proceso. El código es tu <strong>seudónimo</strong> ante la comisión evaluadora.
           </p>
+
+          {postulacionesConsulta.error && (
+            <ErrorCarga error={postulacionesConsulta.error} onReintentar={postulacionesConsulta.reintentar} />
+          )}
 
           <div className="rejilla" style={{ marginTop: '1rem' }}>
             {postulacionesConsulta.datos.map((postulacion) => (
@@ -277,8 +176,8 @@ function CuentaEgresado() {
                   <span className="codigo" style={{ fontSize: '1.1rem', color: 'var(--primario)' }}>
                     {postulacion.codigo}
                   </span>
-                  <span className="insignia insignia--pendiente">
-                    {postulacion.estado}
+                  <span className={`insignia ${claseInsigniaEstado(postulacion.estado)}`}>
+                    {etiquetaEstadoPostulacion(postulacion.estado)}
                   </span>
                 </div>
 
@@ -289,22 +188,23 @@ function CuentaEgresado() {
                   Postulación registrada el {formatearFecha(postulacion.creada_en)}
                 </p>
 
-                <div className="postulacion-item__etapas">
-                  <span className="etapa-chip etapa-chip--aprobada">
-                    ✓ 1. Inscripción
-                  </span>
-                  <span className="etapa-chip etapa-chip--aprobada">
-                    ✓ 2. Evaluación Técnica (PPA)
-                  </span>
-                  <span className="etapa-chip etapa-chip--pendiente">
-                    ⏳ 3. Requisitos Documentales
-                  </span>
-                </div>
+                {postulacion.etapas?.length > 0 ? (
+                  <div className="postulacion-item__etapas">
+                    {postulacion.etapas.map((etapa) => (
+                      <span key={etapa.codigo} className={`etapa-chip ${claseChipEtapa(etapa.estado)}`}>
+                        {prefijoChipEtapa(etapa.estado)} {etapa.orden}. {etapa.nombre}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--texto-suave)', marginTop: '0.5rem' }}>
+                    Cargando avance por etapas…
+                  </p>
+                )}
 
-
-                <div style={{ marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--borde)' }}>
-                  <Link to={`/postulaciones/${postulacion.id}`} className="boton boton--secundario boton--chico" style={{ width: '100%' }}>
-                    Subir y gestionar documentos →
+                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--borde)' }}>
+                  <Link to={`/postulaciones/${postulacion.id}`} className="boton boton--primario" style={{ width: '100%' }}>
+                    {textoAccionPostulacion(postulacion)}
                   </Link>
                 </div>
               </div>
@@ -312,6 +212,123 @@ function CuentaEgresado() {
           </div>
         </section>
       )}
+
+      {!tienePostulacionActiva ? (
+        <section className="seccion" aria-labelledby="titulo-convocatorias-abiertas">
+          <div className="seccion__cabecera">
+            <div>
+              <h2 id="titulo-convocatorias-abiertas" style={{ fontSize: '1.4rem' }}>
+                Paso 2: Convocatorias disponibles para tu carrera
+              </h2>
+              <p className="seccion__descripcion">
+                Selecciona una convocatoria abierta. Para postular, el sistema aplica un{' '}
+                <strong>filtro eliminatorio estricto</strong>: tu PPA debe ser igual o superior al mínimo exigido por la facultad.
+              </p>
+            </div>
+          </div>
+
+          {convocatoriasConsulta.error && (
+            <ErrorCarga error={convocatoriasConsulta.error} onReintentar={convocatoriasConsulta.reintentar} />
+          )}
+
+          {convocatoriasConsulta.cargando && !convocatoriasConsulta.datos && <Esqueleto cantidad={2} />}
+
+          {convocatoriasConsulta.datos?.length === 0 && (
+            <Vacio titulo="No hay convocatorias abiertas para tu carrera en este momento">
+              Revisa periódicamente o consulta en la <Link to="/">página principal</Link>.
+            </Vacio>
+          )}
+
+          {convocatoriasConsulta.datos?.length > 0 && (
+            <ul className="rejilla" style={{ marginTop: '1rem' }}>
+              {convocatoriasConsulta.datos.map((convocatoria) => {
+                const cumplePpa = convocatoria.cumple_ppa
+                const yaPostulado = convocatoria.ya_postulado
+
+                return (
+                  <li
+                    key={convocatoria.proceso_id}
+                    className={`tarjeta convocatoria${yaPostulado ? ' convocatoria--inscrito' : ''}`}
+                  >
+                    <p className="convocatoria__facultad">{convocatoria.facultad.nombre}</p>
+                    <h3>{convocatoria.nombre}</h3>
+                    <p className="convocatoria__carrera">{convocatoria.carrera.nombre}</p>
+
+                    <dl className="datos">
+                      <div>
+                        <dt>Gestión</dt>
+                        <dd>
+                          {convocatoria.gestion}
+                          {convocatoria.numero ? ` · N.º ${convocatoria.numero}` : ''}
+                        </dd>
+                      </div>
+                      {!yaPostulado && (
+                        <div>
+                          <dt>Periodo de postulación</dt>
+                          <dd>
+                            {convocatoria.fecha_cierre
+                              ? `Hasta el ${formatearFecha(convocatoria.fecha_cierre)}`
+                              : `Desde el ${formatearFecha(convocatoria.fecha_apertura)}`}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    {!yaPostulado && (
+                      <div className={`filtro-ppa ${cumplePpa ? 'filtro-ppa--cumple' : 'filtro-ppa--rechazo'}`}>
+                        <div className="filtro-ppa__comparacion">
+                          <span>Mínimo exigido: {formatearPuntaje(convocatoria.ppa_minimo)}</span>
+                          <span>Tu PPA: {formatearPuntaje(egresadoPpa)}</span>
+                        </div>
+
+                        {cumplePpa ? (
+                          <p className="filtro-ppa__estado">
+                            <span aria-hidden="true">✓</span> Calificas con el PPA mínimo exigido.
+                          </p>
+                        ) : (
+                          <div className="filtro-ppa__estado" style={{ display: 'block' }}>
+                            <p style={{ margin: 0, fontWeight: 600 }}>
+                              ⛔ Tu PPA ({formatearPuntaje(egresadoPpa)}) no alcanza el mínimo de{' '}
+                              {formatearPuntaje(convocatoria.ppa_minimo)} exigido por la facultad.
+                            </p>
+                            <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
+                              Filtro eliminatorio: no cumples el requisito académico para postular a este proceso.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="convocatoria__pie">
+                      {yaPostulado ? (
+                        <span className="insignia insignia--exito">✓ Inscrito</span>
+                      ) : cumplePpa ? (
+                        <button
+                          type="button"
+                          className="boton"
+                          disabled={postulandoId === convocatoria.proceso_id}
+                          onClick={() => manejarPostulacion(convocatoria.proceso_id, convocatoria.nombre)}
+                        >
+                          {postulandoId === convocatoria.proceso_id ? 'Procesando postulación…' : 'Postularme a esta convocatoria'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="boton boton--secundario"
+                          disabled
+                          title="Tu PPA no alcanza el mínimo exigido por la facultad"
+                        >
+                          PPA insuficiente para postular
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </div>
   )
 }

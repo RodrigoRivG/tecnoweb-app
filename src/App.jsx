@@ -17,6 +17,10 @@ import Usuarios from './paginas/panel/Usuarios.jsx'
 import RolesPermisos from './paginas/panel/RolesPermisos.jsx'
 import Registro from './paginas/Registro.jsx'
 import RegistroEmpresa from './paginas/RegistroEmpresa.jsx'
+import CandidatosEmpresa from './paginas/empresa/CandidatosEmpresa.jsx'
+import CompletarSolicitudEmpresa from './paginas/empresa/CompletarSolicitudEmpresa.jsx'
+import PagoEmpresa from './paginas/empresa/PagoEmpresa.jsx'
+import DetalleSolicitudEmpresa from './paginas/empresa/DetalleSolicitudEmpresa.jsx'
 import PanelEmpresa from './paginas/PanelEmpresa.jsx'
 import InformeEmpresa from './paginas/InformeEmpresa.jsx'
 import SolicitudesEmpresa from './paginas/panel/SolicitudesEmpresa.jsx'
@@ -38,6 +42,10 @@ const rutas = createRoutesFromElements(
     <Route path="/registro" element={<Registro />} />
     <Route path="/empresa/registro" element={<RegistroEmpresa />} />
     <Route path="/empresa" element={<PanelEmpresa />} />
+    <Route path="/empresa/solicitudes/:procesoId" element={<DetalleSolicitudEmpresa />} />
+    <Route path="/empresa/solicitudes/:procesoId/pago" element={<PagoEmpresa />} />
+    <Route path="/empresa/solicitudes/:procesoId/completar" element={<CompletarSolicitudEmpresa />} />
+    <Route path="/empresa/solicitudes/:procesoId/candidatos" element={<CandidatosEmpresa />} />
     <Route path="/empresa/informes/:id" element={<InformeEmpresa />} />
     <Route path="/mi-cuenta" element={<MiCuenta />} />
     <Route path="/postulaciones/:id" element={<DetallePostulacion />} />

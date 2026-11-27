@@ -100,6 +100,27 @@
   opacity: 0.7;
 }
 
+.etapa-chip--revision {
+  border-color: var(--info);
+  background: var(--info-suave);
+  color: var(--info);
+}
+
+.etapa-chip--reprobada {
+  border-color: var(--error);
+  background: var(--error-suave);
+  color: var(--error);
+}
+
+.convocatoria--inscrito {
+  border-color: var(--exito);
+  background: linear-gradient(180deg, var(--exito-suave) 0%, var(--superficie) 4rem);
+}
+
+.convocatoria--inscrito .convocatoria__pie {
+  margin-top: 0.75rem;
+}
+
 /* ==========================================================================
    Gestión de Requisitos Documentales y Detalle de Postulación
    ========================================================================== */
@@ -198,4 +219,91 @@
   background: var(--superficie-suave);
   padding: 0.4rem;
   font-size: 0.9rem;
+}
+
+.requisito-card__file {
+  flex: 1 1 220px;
+  cursor: pointer;
+}
+
+.requisito-card__file input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.requisito-card__file-text {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--superficie-suave);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.requisito-card__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.requisito-previa {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--superficie-suave);
+}
+
+.requisito-previa__titulo {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.requisito-previa__meta {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--texto);
+}
+
+.requisito-previa__meta strong {
+  word-break: break-word;
+}
+
+.requisito-previa__imagen {
+  display: block;
+  max-width: 100%;
+  max-height: 280px;
+  margin: 0 auto;
+  border-radius: var(--radio-chico);
+  border: 1px solid var(--borde);
+  object-fit: contain;
+  background: var(--superficie);
+}
+
+.requisito-previa__pdf {
+  width: 100%;
+  height: min(360px, 50vh);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--superficie);
+}
+
+.requisito-previa__cargando,
+.requisito-previa__error,
+.requisito-previa__generico {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.requisito-previa__error {
+  color: var(--error);
 }

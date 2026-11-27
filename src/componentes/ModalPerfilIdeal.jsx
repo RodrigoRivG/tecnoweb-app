@@ -91,6 +91,7 @@ export default function ModalPerfilIdeal({ procesoId, nombre, alCerrar }) {
               titulo="Personalidad (16PF)"
               descripcion="Haz clic en un esten del 1 al 10 para marcar lo que busca la empresa. Clic de nuevo para quitarlo."
               filas={personalidad}
+              variante="16pf"
               editable
               onCambiarIdeal={(dimensionId, valor) => setPersonalidad((filas) => aplicarNivel(filas, dimensionId, valor, 'esten_ideal'))}
             />
@@ -98,6 +99,7 @@ export default function ModalPerfilIdeal({ procesoId, nombre, alCerrar }) {
               titulo="Habilidades blandas"
               descripcion="Nivel deseado en cada competencia socioemocional."
               filas={blandas}
+              variante="dimension"
               editable
               onCambiarIdeal={(dimensionId, valor) => setBlandas((filas) => aplicarNivel(filas, dimensionId, valor, 'esten_ideal'))}
             />

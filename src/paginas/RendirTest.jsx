@@ -53,6 +53,7 @@ export default function RendirTest() {
   const [guardando, setGuardando] = useState(false)
   const [resultadoReciente, setResultadoReciente] = useState(null)
   const [errorAccion, setErrorAccion] = useState(null)
+  const [opcionPendiente, setOpcionPendiente] = useState(null)
 
   // Intento y resultado efectivos (derivados)
   const intentoId = intentoIniciado?.intento_id ?? evaluacion?.intento_activo?.id ?? null
@@ -118,20 +119,26 @@ export default function RendirTest() {
     }
   }
 
-  // Marcar una respuesta
-  const handleSeleccionarOpcion = async (preguntaId, opcionId) => {
+  const handleElegirOpcion = (opcionId) => {
     if (finalizando || resultadoFinal || guardando) return
+    setOpcionPendiente(opcionId)
+    setErrorAccion(null)
+  }
+
+  const handleSiguientePregunta = async () => {
+    if (!preguntaActual || opcionPendiente == null || finalizando || resultadoFinal || guardando) return
 
     setGuardando(true)
     setErrorAccion(null)
 
     try {
-      await responderPregunta(intentoId, preguntaId, opcionId)
+      await responderPregunta(intentoId, preguntaActual.id, opcionPendiente)
+      setOpcionPendiente(null)
       recargarPreguntas()
-      setGuardando(false)
     } catch (err) {
-      setGuardando(false)
       setErrorAccion(err.message || 'No se pudo guardar tu respuesta. Verifica tu conexión.')
+    } finally {
+      setGuardando(false)
     }
   }
 
@@ -160,6 +167,7 @@ export default function RendirTest() {
     setIntentoIniciado(null)
     setResultadoReciente(null)
     setRespuestasManuales({})
+    setOpcionPendiente(null)
     setErrorAccion(null)
   }
 
@@ -171,6 +179,10 @@ export default function RendirTest() {
     totalPreguntas > 0 ? Math.round((totalRespondidas / totalPreguntas) * 100) : 0
   const preguntaActual = preguntas[0] ?? null
   const numeroVisible = Math.min(totalPreguntas || 1, totalRespondidas + 1)
+
+  useEffect(() => {
+    setOpcionPendiente(null)
+  }, [preguntaActual?.id])
 
   useEffect(() => {
     if (tiempoRestante !== 0 || !preguntaActual || resultadoFinal) return
@@ -510,7 +522,9 @@ export default function RendirTest() {
                 <>
                   <strong>Recomendaciones:</strong> Responde con espontaneidad y sinceridad según tus
                   preferencias y hábitos personales. No hay respuestas correctas o incorrectas. Una vez
-                  iniciado, deberás responder cada pregunta dentro de su tiempo. Si llega a cero, pasa a la siguiente.
+                  iniciado, elige cada respuesta y confírmala con <strong>Siguiente</strong>. Cada pregunta tiene
+                  su propio tiempo; si llega a cero, avanza sin esa respuesta. Puedes usar{' '}
+                  <strong>Terminar intento</strong> cuando quieras entregar.
                 </>
               )}
             </p>
@@ -554,14 +568,24 @@ export default function RendirTest() {
           </span>
         </div>
 
-        {tiempoRestante !== null && (
-          <div
-            className={`evaluacion-reloj ${tiempoRestante <= 10 ? 'evaluacion-reloj--alerta' : ''}`}
+        <div className="evaluacion-cabecera__acciones">
+          <button
+            type="button"
+            className="boton boton--secundario boton--chico"
+            onClick={() => setMostrarModalFinalizar(true)}
+            disabled={guardando || finalizando}
           >
-            <span>Esta pregunta</span>
-            <span>{formatearTiempo(tiempoRestante)}</span>
-          </div>
-        )}
+            Terminar intento
+          </button>
+          {tiempoRestante !== null && (
+            <div
+              className={`evaluacion-reloj ${tiempoRestante <= 10 ? 'evaluacion-reloj--alerta' : ''}`}
+            >
+              <span>Esta pregunta</span>
+              <span>{formatearTiempo(tiempoRestante)}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Barra de Progreso */}
@@ -653,7 +677,7 @@ export default function RendirTest() {
                 aria-label="Opciones de respuesta"
               >
                 {preguntaActual.opciones?.map((opc) => {
-                  const estaSeleccionada = respuestas[preguntaActual.id] === opc.id
+                  const estaSeleccionada = opcionPendiente === opc.id
                   return (
                     <button
                       key={opc.id}
@@ -661,7 +685,8 @@ export default function RendirTest() {
                       className={`boton-opcion-letra ${
                         estaSeleccionada ? 'boton-opcion-letra--seleccionada' : ''
                       }`}
-                      onClick={() => handleSeleccionarOpcion(preguntaActual.id, opc.id)}
+                      onClick={() => handleElegirOpcion(opc.id)}
+                      disabled={guardando}
                       role="radio"
                       aria-checked={estaSeleccionada}
                     >
@@ -690,7 +715,7 @@ export default function RendirTest() {
                 aria-label="Opciones de escala Likert"
               >
                 {preguntaActual.opciones?.map((opc) => {
-                  const estaSeleccionada = respuestas[preguntaActual.id] === opc.id
+                  const estaSeleccionada = opcionPendiente === opc.id
                   return (
                     <button
                       key={opc.id}
@@ -698,7 +723,8 @@ export default function RendirTest() {
                       className={`boton-opcion-likert ${
                         estaSeleccionada ? 'boton-opcion-likert--seleccionada' : ''
                       }`}
-                      onClick={() => handleSeleccionarOpcion(preguntaActual.id, opc.id)}
+                      onClick={() => handleElegirOpcion(opc.id)}
+                      disabled={guardando}
                       role="radio"
                       aria-checked={estaSeleccionada}
                     >
@@ -712,21 +738,21 @@ export default function RendirTest() {
           ) : (
             <div className="opciones-lista" role="radiogroup" aria-label="Opciones de respuesta">
               {preguntaActual.opciones?.map((opc) => {
-                const estaSeleccionada = respuestas[preguntaActual.id] === opc.id
+                const estaSeleccionada = opcionPendiente === opc.id
                 return (
                   <div
                     key={opc.id}
                     className={`opcion-item ${
                       estaSeleccionada ? 'opcion-item--seleccionada' : ''
                     }`}
-                    onClick={() => handleSeleccionarOpcion(preguntaActual.id, opc.id)}
+                    onClick={() => !guardando && handleElegirOpcion(opc.id)}
                     role="radio"
                     aria-checked={estaSeleccionada}
-                    tabIndex={0}
+                    tabIndex={guardando ? -1 : 0}
                     onKeyDown={(e) => {
                       if (e.key === ' ' || e.key === 'Enter') {
                         e.preventDefault()
-                        handleSeleccionarOpcion(preguntaActual.id, opc.id)
+                        if (!guardando) handleElegirOpcion(opc.id)
                       }
                     }}
                   >
@@ -741,13 +767,21 @@ export default function RendirTest() {
             </div>
           )}
 
-          {/* Botones de Navegación */}
           <div className="evaluacion-acciones" style={{ marginTop: '2rem' }}>
             <p style={{ margin: 0, color: 'var(--texto-suave)' }}>
               {guardando
                 ? 'Guardando respuesta…'
-                : 'Al elegir una opción avanzas. Esa respuesta queda bloqueada.'}
+                : 'Elige una opción y pulsa Siguiente. No podrás volver a preguntas anteriores.'}
             </p>
+            <button
+              type="button"
+              className="boton boton--primario"
+              onClick={handleSiguientePregunta}
+              disabled={opcionPendiente == null || guardando || finalizando}
+              style={{ marginTop: '1rem', minWidth: '10rem' }}
+            >
+              {guardando ? 'Guardando…' : 'Siguiente'}
+            </button>
           </div>
         </div>
       ) : null}
@@ -756,11 +790,12 @@ export default function RendirTest() {
       {mostrarModalFinalizar && (
         <div className="modal-superposicion">
           <div className="modal-contenido" style={{ maxWidth: '480px' }}>
-            <h3 style={{ margin: '0 0 1rem' }}>¿Deseas entregar tu evaluación?</h3>
+            <h3 style={{ margin: '0 0 1rem' }}>¿Terminar el intento ahora?</h3>
             <p style={{ color: 'var(--texto-suave)', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
               Has respondido {totalRespondidas} de {totalPreguntas} preguntas (
-              {totalPreguntas - totalRespondidas} pendientes). Al confirmar, tus respuestas serán
-              calificadas y se registrará tu resultado final.
+              {totalPreguntas - totalRespondidas} pendientes). Si confirmas, se entregará el intento
+              con lo que llevas; las preguntas sin responder no se puntúan. No podrás retomar este
+              intento.
             </p>
 
             {errorAccion && (
@@ -785,7 +820,7 @@ export default function RendirTest() {
                 disabled={finalizando}
                 style={{ background: 'var(--exito)', borderColor: 'var(--exito)', color: 'var(--superficie)' }}
               >
-                {finalizando ? 'Calificando…' : 'Sí, Entregar Evaluación'}
+                {finalizando ? 'Calificando…' : 'Sí, terminar intento'}
               </button>
             </div>
           </div>

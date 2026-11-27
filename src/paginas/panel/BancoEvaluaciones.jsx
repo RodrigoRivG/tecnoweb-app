@@ -139,19 +139,33 @@ export default function BancoEvaluaciones() {
 
       <div className="banco__familias" role="tablist" aria-label="Familias">
         {familias.map((item) => (
-          <TiempoFamilia
+          <button
             key={item.codigo}
-            item={item}
-            activa={item.codigo === familia?.codigo}
-            onElegir={elegirFamilia}
-            onGuardado={(codigo, segundos) => {
-              setFamilias((lista) => lista.map((familiaItem) => (
-                familiaItem.codigo === codigo ? { ...familiaItem, tiempo_pregunta_seg: segundos } : familiaItem
-              )))
-            }}
-          />
+            type="button"
+            role="tab"
+            aria-selected={item.codigo === familia?.codigo}
+            className={`banco__familia-pill${item.codigo === familia?.codigo ? ' banco__familia-pill--activa' : ''}`}
+            onClick={() => elegirFamilia(item.codigo)}
+          >
+            <span className="banco__familia-nombre">{item.nombre}</span>
+            <span className="banco__familia-meta">
+              <span>{item.libros} {item.libros === 1 ? 'libro' : 'libros'}</span>
+              <span>{item.modo_etiqueta}</span>
+            </span>
+          </button>
         ))}
       </div>
+
+      {familia && (
+        <TiempoFamilia
+          item={familia}
+          onGuardado={(codigo, segundos) => {
+            setFamilias((lista) => lista.map((familiaItem) => (
+              familiaItem.codigo === codigo ? { ...familiaItem, tiempo_pregunta_seg: segundos } : familiaItem
+            )))
+          }}
+        />
+      )}
 
       <div className="banco__cuerpo">
         <section className="banco__libros" aria-label="Libros">
@@ -168,14 +182,17 @@ export default function BancoEvaluaciones() {
                   <button
                     type="button"
                     className={`banco__libro${item.id === libro?.id ? ' banco__libro--activo' : ''}${item.activa === false ? ' banco__libro--inactivo' : ''}`}
+                    title={item.codigo}
                     onClick={() => {
                       setCargandoPreguntas(true)
                       setLibroId(item.id)
                     }}
                   >
+                    <strong className="banco__libro-nombre">{item.nombre}</strong>
                     <span className="banco__codigo">{item.codigo}</span>
-                    <strong>{item.nombre}</strong>
-                    <span>{item.preguntas} preguntas · {item.activa === false ? 'Inactivo' : 'Activo'}</span>
+                    <span className="banco__libro-meta">
+                      {item.preguntas} preguntas · {item.activa === false ? 'Inactivo' : 'Activo'}
+                    </span>
                     {item.carreras?.length > 0 && (
                       <span className="banco__carreras">
                         {item.carreras.map((carrera) => (
@@ -305,7 +322,7 @@ function preguntaVacia() {
   }
 }
 
-function TiempoFamilia({ item, activa, onElegir, onGuardado }) {
+function TiempoFamilia({ item, onGuardado }) {
   const [borrador, setBorrador] = useState(null)
   const [guardando, setGuardando] = useState(false)
   const [aviso, setAviso] = useState(null)
@@ -327,23 +344,13 @@ function TiempoFamilia({ item, activa, onElegir, onGuardado }) {
   }
 
   return (
-    <article className={`banco__familia-tarjeta${activa ? ' banco__familia-tarjeta--activa' : ''}`}>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={activa}
-        className="banco__familia"
-        onClick={() => onElegir(item.codigo)}
-      >
-        <span className="banco__familia-nombre">{item.nombre}</span>
-        <span className="banco__familia-meta">
-          <span>{item.libros} {item.libros === 1 ? 'libro' : 'libros'}</span>
-          <span>{item.modo_etiqueta}</span>
-        </span>
-      </button>
+    <div className="banco__tiempo-bar">
+      <p className="banco__tiempo-etiqueta">
+        Tiempo por pregunta en <strong>{item.nombre}</strong>
+      </p>
       <form className="banco__tiempo" onSubmit={guardar}>
         <label>
-          Segundos por pregunta
+          Segundos
           <input
             type="number"
             min="5"
@@ -356,8 +363,8 @@ function TiempoFamilia({ item, activa, onElegir, onGuardado }) {
           {guardando ? '…' : 'Guardar'}
         </button>
       </form>
-      {aviso && <small>{aviso}</small>}
-    </article>
+      {aviso && <small className="banco__tiempo-aviso">{aviso}</small>}
+    </div>
   )
 }
 

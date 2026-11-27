@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router'
+import { obtenerBlobDocumento } from '../api/cliente.js'
 import { descargarDocumentoPostulacion, obtenerDetallePostulacion, obtenerResultadoFinal, subirDocumentoPostulacion } from '../api/egresado.js'
 import { aprobarRequisitos } from '../api/evaluador.js'
 import { ErrorCarga, Esqueleto } from '../componentes/Estado.jsx'
@@ -7,6 +8,7 @@ import ModalCuadroHonor from '../componentes/ModalCuadroHonor.jsx'
 import ModalEvaluacionCv from '../componentes/ModalEvaluacionCv.jsx'
 import InformeCandidato from '../componentes/InformeCandidato.jsx'
 import ModulosEvaluacion from '../componentes/ModulosEvaluacion.jsx'
+import VistaPreviaDocumento from '../componentes/VistaPreviaDocumento.jsx'
 import ModalEvaluacionEntrevista from '../componentes/ModalEvaluacionEntrevista.jsx'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { formatearFecha, formatearTamano } from '../utilidades/formato.js'
@@ -28,6 +30,7 @@ export default function DetallePostulacion() {
   const [resultadoFinal, setResultadoFinal] = useState(null)
   const [aprobandoRequisitos, setAprobandoRequisitos] = useState(false)
 
+  const [modulosRefresco, setModulosRefresco] = useState(0)
   const consulta = useConsulta(obtenerDetallePostulacion, id)
   const enPanel = puedeEntrarAlPanel(usuario)
   const esCandidato = esCandidatoExterno(usuario)
@@ -117,10 +120,22 @@ export default function DetallePostulacion() {
 
     try {
       await subirDocumentoPostulacion(postulacion.id, tipoDocumento, archivo)
-      setAviso({ tipo: 'exito', mensaje: '¡Documento subido y registrado exitosamente!' })
+      consulta.reintentar()
+      setModulosRefresco((n) => n + 1)
+      const detalle = await obtenerDetallePostulacion(postulacion.id)
+      setAviso({
+        tipo: 'exito',
+        mensaje: detalle.requisitos_completos
+          ? '¡Documentación completa! Tus pruebas ya están habilitadas — pulsa Siguiente en el paso 4.'
+          : `«${archivo.name}» guardado correctamente.`,
+      })
+      if (detalle.requisitos_completos) {
+        requestAnimationFrame(() => {
+          document.getElementById('titulo-modulos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+      }
       setArchivosSeleccionados({ ...archivosSeleccionados, [tipoDocumento]: undefined })
       setReemplazandoTipo({ ...reemplazandoTipo, [tipoDocumento]: false })
-      consulta.reintentar()
     } catch (error) {
       setAviso({ tipo: 'error', mensaje: error.message || 'Error al subir el documento.' })
     } finally {
@@ -136,17 +151,149 @@ export default function DetallePostulacion() {
     }
   }
 
+  async function verArchivo(documentoId) {
+    try {
+      const blob = await obtenerBlobDocumento(`/documentos/${documentoId}/archivo`)
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (error) {
+      setAviso({ tipo: 'error', mensaje: error.message || 'No se pudo abrir el archivo.' })
+    }
+  }
+
   async function handleAprobarRequisitos() {
     try {
       setAprobandoRequisitos(true)
       await aprobarRequisitos(postulacion.id)
       setAviso({ tipo: 'exito', mensaje: 'Requisitos validados y aprobados exitosamente. La Etapa 4 (Evaluación Psicológica) ha sido habilitada.' })
       consulta.reintentar()
+      setModulosRefresco((n) => n + 1)
     } catch (err) {
       setAviso({ tipo: 'error', mensaje: err.mensaje || 'Error al aprobar requisitos.' })
     } finally {
       setAprobandoRequisitos(false)
     }
+  }
+
+  function renderRequisito(req) {
+    const tieneDocumento = req.documento !== null
+    const doc = req.documento
+    const estaReemplazando = reemplazandoTipo[req.tipo_documento]
+    const esFoto = req.tipo_documento === 'FOTOGRAFIA'
+    const extensiones = esFoto ? '.jpg,.jpeg,.png' : '.pdf,.jpg,.jpeg,.png'
+    const archivoLocal = archivosSeleccionados[req.tipo_documento]
+    const mostrarSubida = (!tieneDocumento || estaReemplazando) && !enPanel
+
+    return (
+      <li key={req.tipo_documento} className="requisito-card">
+        <div className="requisito-card__cabecera">
+          <div className="requisito-card__info">
+            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{req.nombre}</h3>
+            {req.obligatorio ? (
+              <span className="insignia insignia--error" style={{ fontSize: '0.75rem' }}>
+                Obligatorio
+              </span>
+            ) : (
+              <span className="insignia insignia--neutro" style={{ fontSize: '0.75rem' }}>
+                Opcional
+              </span>
+            )}
+          </div>
+
+          <div>
+            {tieneDocumento && !estaReemplazando ? (
+              <span className="insignia insignia--exito">
+                ✓{' '}
+                {doc.estado === 'PENDIENTE' ? 'Cargado' : doc.estado === 'VALIDADO' ? 'Validado' : doc.estado}
+              </span>
+            ) : archivoLocal ? (
+              <span className="insignia insignia--advertencia">Listo para enviar</span>
+            ) : (
+              <span className="insignia insignia--alerta">Falta subir</span>
+            )}
+          </div>
+        </div>
+
+        {!requisitosAprobados && (
+          <p style={{ fontSize: '0.85rem', color: 'var(--texto-suave)', margin: '0 0 0.75rem' }}>
+            Formatos: {esFoto ? 'JPG, PNG' : 'PDF, JPG, PNG'} · máx. 5 MB. Elige el archivo y pulsa{' '}
+            <strong>Subir archivo</strong>.
+          </p>
+        )}
+
+        {tieneDocumento && !estaReemplazando && (
+          <>
+            <VistaPreviaDocumento documentoServidor={doc} />
+            <div className="requisito-card__archivo-subido">
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--texto-suave)' }}>
+                Subido el {formatearFecha(doc.subido_en)}
+              </p>
+              <div className="requisito-card__acciones">
+                <button type="button" className="boton boton--secundario boton--chico" onClick={() => verArchivo(doc.id)}>
+                  Ver
+                </button>
+                <button
+                  type="button"
+                  className="boton boton--secundario boton--chico"
+                  onClick={() => descargarArchivo(doc.id, doc.nombre_archivo)}
+                >
+                  Descargar
+                </button>
+                {!requisitosAprobados && !enPanel && (
+                  <button
+                    type="button"
+                    className="boton boton--secundario boton--chico"
+                    onClick={() => setReemplazandoTipo({ ...reemplazandoTipo, [req.tipo_documento]: true })}
+                  >
+                    Reemplazar
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {mostrarSubida && (
+          <>
+            {archivoLocal && <VistaPreviaDocumento archivoLocal={archivoLocal} etiqueta="Vista antes de subir" />}
+            <div className="requisito-card__subida-form">
+              <label className="requisito-card__file">
+                <span className="requisito-card__file-text">{archivoLocal ? 'Cambiar archivo' : 'Elegir archivo'}</span>
+                <input
+                  type="file"
+                  accept={extensiones}
+                  onChange={(e) => seleccionarArchivo(req.tipo_documento, e)}
+                  disabled={subiendoTipo === req.tipo_documento}
+                />
+              </label>
+
+              <button
+                type="button"
+                className="boton boton--chico"
+                disabled={subiendoTipo === req.tipo_documento || !archivoLocal}
+                onClick={() => enviarDocumento(req.tipo_documento)}
+              >
+                {subiendoTipo === req.tipo_documento ? 'Subiendo…' : 'Subir archivo'}
+              </button>
+
+              {estaReemplazando && (
+                <button
+                  type="button"
+                  className="boton boton--secundario boton--chico"
+                  onClick={() => {
+                    setReemplazandoTipo({ ...reemplazandoTipo, [req.tipo_documento]: false })
+                    setArchivosSeleccionados({ ...archivosSeleccionados, [req.tipo_documento]: undefined })
+                  }}
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </li>
+    )
   }
 
   return (
@@ -249,175 +396,104 @@ export default function DetallePostulacion() {
 
       {/* Bloque 2: Paso 3 - Requisitos Documentales */}
       {!esCandidato && postulacion.requisitos?.length > 0 && (
-      <section aria-labelledby="titulo-requisitos" style={{ marginTop: '2.5rem' }}>
-        <h2 id="titulo-requisitos" style={{ fontSize: '1.3rem' }}>
-          Paso 3: Carga de Requisitos Documentales
-        </h2>
-        <p className="seccion__descripcion">
-          Para que el equipo evaluador pueda iniciar la revisión de tu postulación, debes subir los documentos
-          obligatorios solicitados en formato PDF o imagen (máximo 5 MB por archivo).
-        </p>
-
-        {requisitosAprobados ? (
-          <div className="aviso aviso--exito" role="status">
-            <p>
-              <strong>✓ Documentación aprobada:</strong> El equipo evaluador ha validado todos tus documentos obligatorios.
-              La Etapa 3 ha sido superada exitosamente.
-            </p>
-          </div>
-        ) : postulacion.requisitos_completos ? (
-          <div className="aviso aviso--exito" role="status">
-            <p>
-              <strong>✓ Documentación completa:</strong> Has subido todos los documentos obligatorios requeridos.
-              Tu postulación ha pasado a estado <strong>En Revisión</strong>.
-            </p>
-          </div>
-        ) : (
-          <div className="aviso aviso--error" role="status">
-            <p>
-              <strong>Requisitos pendientes:</strong> Faltan uno o más documentos obligatorios para que tu postulación pueda ser revisada.
-            </p>
-          </div>
-        )}
-
-        {puedeRequisitos && !requisitosAprobados && postulacion.requisitos_completos && (
-          <div
-            style={{
-              marginTop: '1rem',
-              marginBottom: '1rem',
-              padding: '1rem 1.25rem',
-              background: 'var(--info-suave)',
-              border: '1px solid var(--info-borde)',
-              borderRadius: '8px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem',
-            }}
-          >
-            <div>
-              <strong style={{ color: 'var(--info)' }}>Revisión de Documentación (Comisión / Evaluador):</strong>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--info)' }}>
-                Todos los documentos obligatorios han sido presentados. Puedes validar el expediente y habilitar la evaluación psicológica del postulante.
+        <section
+          aria-labelledby="titulo-requisitos"
+          className={requisitosAprobados && !enPanel ? 'requisitos-paso' : undefined}
+          style={{ marginTop: '2.5rem' }}
+        >
+          {requisitosAprobados && !enPanel ? (
+            <details className="requisitos-paso__details">
+              <summary id="titulo-requisitos" className="requisitos-paso__summary">
+                Paso 3: Documentación <span className="insignia insignia--exito">Completada</span>
+              </summary>
+              <p className="seccion__descripcion" style={{ marginTop: '0.75rem' }}>
+                Tus documentos obligatorios ya fueron validados. Expande esta sección para ver o descargar cada archivo.
               </p>
-            </div>
-            <button
-              type="button"
-              className="boton boton--primario"
-              onClick={handleAprobarRequisitos}
-              disabled={aprobandoRequisitos}
-            >
-              {aprobandoRequisitos ? 'Aprobando…' : '✓ Validar y Aprobar Requisitos'}
-            </button>
-          </div>
-        )}
+              <ul className="requisitos-lista">
+                {postulacion.requisitos?.map((req) => renderRequisito(req))}
+              </ul>
+            </details>
+          ) : (
+            <>
+              <h2 id="titulo-requisitos" style={{ fontSize: '1.3rem' }}>
+                Paso 3: Carga de Requisitos Documentales
+              </h2>
+              <p className="seccion__descripcion">
+                Para que el equipo evaluador pueda iniciar la revisión de tu postulación, debes subir los documentos
+                obligatorios solicitados en formato PDF o imagen (máximo 5 MB por archivo).
+              </p>
 
-        <ul className="requisitos-lista">
-          {postulacion.requisitos?.map((req) => {
-            const tieneDocumento = req.documento !== null
-            const doc = req.documento
-            const estaReemplazando = reemplazandoTipo[req.tipo_documento]
-            const esFoto = req.tipo_documento === 'FOTOGRAFIA'
-            const extensiones = esFoto ? '.jpg,.jpeg,.png' : '.pdf,.jpg,.jpeg,.png'
-
-            return (
-              <li key={req.tipo_documento} className="requisito-card">
-                <div className="requisito-card__cabecera">
-                  <div className="requisito-card__info">
-                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{req.nombre}</h3>
-                    {req.obligatorio ? (
-                      <span className="insignia insignia--error" style={{ fontSize: '0.75rem' }}>Obligatorio</span>
-                    ) : (
-                      <span className="insignia insignia--neutro" style={{ fontSize: '0.75rem' }}>Opcional</span>
-                    )}
-                  </div>
-
-                  <div>
-                    {tieneDocumento ? (
-                      <span className="insignia insignia--exito">
-                        ✓ {doc.estado === 'PENDIENTE' ? 'Cargado (En revisión)' : doc.estado === 'VALIDADO' ? 'Validado y Aprobado' : doc.estado}
-                      </span>
-                    ) : (
-                      <span className="insignia insignia--alerta">Falta subir</span>
-                    )}
-                  </div>
+              {requisitosAprobados ? (
+                <div className="aviso aviso--exito" role="status">
+                  <p>
+                    <strong>✓ Documentación aprobada:</strong> El equipo evaluador ha validado todos tus documentos obligatorios.
+                    La Etapa 3 ha sido superada exitosamente.
+                  </p>
                 </div>
+              ) : postulacion.requisitos_completos ? (
+                <div className="aviso aviso--exito" role="status">
+                  <p>
+                    <strong>✓ Documentación completa:</strong> Has subido todos los documentos obligatorios.
+                    {requisitosAprobados
+                      ? ' La etapa de requisitos quedó aprobada.'
+                      : ' El sistema validó tu expediente automáticamente; puedes continuar con las evaluaciones.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="aviso aviso--error" role="status">
+                  <p>
+                    <strong>Requisitos pendientes:</strong> Faltan uno o más documentos obligatorios para que tu postulación pueda ser revisada.
+                  </p>
+                </div>
+              )}
 
-                <p style={{ fontSize: '0.85rem', color: 'var(--texto-suave)', margin: '0 0 0.75rem' }}>
-                  Formatos permitidos: {esFoto ? 'JPG, PNG' : 'PDF, JPG, PNG'} (Hasta 5 MB).
-                </p>
-
-                {/* Si ya tiene documento subido */}
-                {tieneDocumento && !estaReemplazando && (
-                  <div className="requisito-card__archivo-subido">
-                    <div>
-                      <p style={{ margin: 0, fontWeight: 600 }}>📄 {doc.nombre_archivo}</p>
-                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--texto-suave)' }}>
-                        {formatearTamano(doc.tamano_bytes)} · Subido el {formatearFecha(doc.subido_en)}
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        className="boton boton--secundario boton--chico"
-                        onClick={() => descargarArchivo(doc.id, doc.nombre_archivo)}
-                      >
-                        Descargar
-                      </button>
-                      {!requisitosAprobados && !enPanel && (
-                        <button
-                          type="button"
-                          className="boton boton--secundario boton--chico"
-                          onClick={() => setReemplazandoTipo({ ...reemplazandoTipo, [req.tipo_documento]: true })}
-                        >
-                          Reemplazar archivo
-                        </button>
-                      )}
-                    </div>
+              {puedeRequisitos && !requisitosAprobados && postulacion.requisitos_completos && (
+                <div
+                  style={{
+                    marginTop: '1rem',
+                    marginBottom: '1rem',
+                    padding: '1rem 1.25rem',
+                    background: 'var(--info-suave)',
+                    border: '1px solid var(--info-borde)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                  }}
+                >
+                  <div>
+                    <strong style={{ color: 'var(--info)' }}>Revisión de Documentación (Comisión / Evaluador):</strong>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--info)' }}>
+                      Todos los documentos obligatorios han sido presentados. Puedes validar el expediente y habilitar la evaluación psicológica del postulante.
+                    </p>
                   </div>
-                )}
+                  <button
+                    type="button"
+                    className="boton boton--primario"
+                    onClick={handleAprobarRequisitos}
+                    disabled={aprobandoRequisitos}
+                  >
+                    {aprobandoRequisitos ? 'Aprobando…' : '✓ Validar y Aprobar Requisitos'}
+                  </button>
+                </div>
+              )}
 
-                {/* Si no tiene documento o eligió reemplazar */}
-                {(!tieneDocumento || estaReemplazando) && !enPanel && (
-                  <div className="requisito-card__subida-form">
-                    <input
-                      type="file"
-                      accept={extensiones}
-                      onChange={(e) => seleccionarArchivo(req.tipo_documento, e)}
-                      disabled={subiendoTipo === req.tipo_documento}
-                    />
-
-                    <button
-                      type="button"
-                      className="boton boton--chico"
-                      disabled={subiendoTipo === req.tipo_documento || !archivosSeleccionados[req.tipo_documento]}
-                      onClick={() => enviarDocumento(req.tipo_documento)}
-                    >
-                      {subiendoTipo === req.tipo_documento ? 'Subiendo…' : 'Subir archivo'}
-                    </button>
-
-                    {estaReemplazando && (
-                      <button
-                        type="button"
-                        className="boton boton--secundario boton--chico"
-                        onClick={() => setReemplazandoTipo({ ...reemplazandoTipo, [req.tipo_documento]: false })}
-                      >
-                        Cancelar
-                      </button>
-                    )}
-                  </div>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </section>
+              <ul className="requisitos-lista">
+                {postulacion.requisitos?.map((req) => renderRequisito(req))}
+              </ul>
+            </>
+          )}
+        </section>
       )}
 
       {!enPanel && (
-        <ModulosEvaluacion postulacionId={postulacion.id} />
+        <ModulosEvaluacion
+          postulacionId={postulacion.id}
+          refresco={modulosRefresco}
+          alCompletarEtapa={() => consulta.reintentar()}
+        />
       )}
 
       {/* Bloque 5: Paso 6 - Análisis de CV */}
