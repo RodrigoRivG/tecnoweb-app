@@ -7,11 +7,12 @@
     <title>Talento · Bolsa de egresados</title>
     <script>
       try {
-        if (localStorage.getItem('tecno.tema') === 'oscuro') {
-          document.documentElement.dataset.tema = 'oscuro'
+        for (const nombre of ['tema', 'perfilVisual', 'tamanoTexto', 'contraste']) {
+          const valor = localStorage.getItem(`tecno.${nombre}`)
+          if (valor) document.documentElement.dataset[nombre] = valor
         }
       } catch {
-        // El tema claro se usa por defecto.
+        // Se conservan los valores por defecto si el navegador restringe el almacenamiento.
       }
     </script>
   </head>

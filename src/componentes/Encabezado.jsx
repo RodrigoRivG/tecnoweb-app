@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, LogOut, UserRound } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router'
 import { useSesion } from '../sesion/SesionContext.jsx'
 import { esEmpresa, inicioDe, puedeEntrarAlPanel } from '../utilidades/roles.js'
+import AjustesApariencia from './AjustesApariencia.jsx'
 
 function iniciales(texto) {
   return texto
@@ -17,7 +18,7 @@ export default function Encabezado() {
   const { usuario, cerrarSesion } = useSesion()
   const navegar = useNavigate()
   const [abierto, setAbierto] = useState(false)
-  const [oscuro, setOscuro] = useState(() => document.documentElement.dataset.tema === 'oscuro')
+  const menuCuenta = useRef(null)
 
   useEffect(() => {
     if (!abierto) {
@@ -25,7 +26,7 @@ export default function Encabezado() {
     }
 
     function alPresionar(evento) {
-      if (evento.key === 'Escape') {
+      if (evento.key === 'Escape' && !menuCuenta.current?.matches(':popover-open')) {
         setAbierto(false)
       }
     }
@@ -35,39 +36,32 @@ export default function Encabezado() {
     return () => document.removeEventListener('keydown', alPresionar)
   }, [abierto])
 
-  function cerrarAlNavegar(evento) {
-    if (evento.target.closest('a')) {
-      setAbierto(false)
-    }
+  function cerrarMenus() {
+    menuCuenta.current?.hidePopover()
+    setAbierto(false)
   }
 
-  function alternarTema() {
-    const tema = oscuro ? 'claro' : 'oscuro'
-    document.documentElement.dataset.tema = tema
-    setOscuro(!oscuro)
-
-    try {
-      localStorage.setItem('tecno.tema', tema)
-    } catch {
-      // El cambio se aplica aunque el navegador impida guardar la preferencia.
+  function cerrarAlNavegar(evento) {
+    if (evento.target.closest('a')) {
+      cerrarMenus()
     }
   }
 
   async function salir() {
-    setAbierto(false)
+    cerrarMenus()
     await cerrarSesion()
     navegar('/')
   }
 
   const nombre = usuario ? usuario.persona?.nombres ?? usuario.correo : ''
+  const rol = usuario?.rol?.nombre ?? usuario?.rol?.codigo
   const tienePanel = puedeEntrarAlPanel(usuario)
-  const IconoTema = oscuro ? Sun : Moon
-  const etiquetaTema = oscuro ? 'Activar tema claro' : 'Activar tema oscuro'
+  const tieneEmpresa = esEmpresa(usuario)
 
   return (
     <header className={`encabezado ${abierto ? 'encabezado--abierto' : ''}`}>
       <div className="contenedor encabezado__fila">
-        <Link to="/" className="marca" onClick={() => setAbierto(false)}>
+        <Link to="/" className="marca" onClick={cerrarMenus}>
           <span className="marca__simbolo" aria-hidden="true">T</span>
           <span className="marca__texto">
             Talento
@@ -90,18 +84,43 @@ export default function Encabezado() {
           <div className="encabezado__enlaces">
             <NavLink to="/" end className="enlace-nav">Inicio</NavLink>
             {tienePanel && <NavLink to="/panel" className="enlace-nav">Panel</NavLink>}
-            {esEmpresa(usuario) && <NavLink to="/empresa" className="enlace-nav">Mi empresa</NavLink>}
+            {tieneEmpresa && <NavLink to="/empresa" className="enlace-nav">Mi empresa</NavLink>}
             {!usuario && <NavLink to="/empresa/registro" className="enlace-nav">Empresas</NavLink>}
           </div>
 
           <div className="encabezado__cuenta">
             {usuario ? (
               <>
-                <NavLink to={inicioDe(usuario)} end className="enlace-nav enlace-nav--usuario">
+                <button
+                  type="button"
+                  className="enlace-nav enlace-nav--usuario"
+                  popoverTarget="menu-cuenta"
+                  aria-haspopup="dialog"
+                  aria-label={`Opciones de cuenta de ${nombre}`}
+                >
                   <span className="avatar" aria-hidden="true">{iniciales(nombre)}</span>
-                  <span className="enlace-nav__nombre">{nombre}</span>
-                </NavLink>
-                <button type="button" className="boton-nav boton-nav--contorno" onClick={salir}>Salir</button>
+                  <ChevronDown className="enlace-nav__indicador" size={16} aria-hidden="true" />
+                </button>
+
+                <div id="menu-cuenta" ref={menuCuenta} className="menu-cuenta" popover="auto" role="dialog" aria-label="Cuenta">
+                  <div className="menu-cuenta__identidad">
+                    <strong>{nombre}</strong>
+                    {nombre !== usuario.correo && <p>{usuario.correo}</p>}
+                    {rol && <p>{rol}</p>}
+                  </div>
+
+                  {!tienePanel && !tieneEmpresa && (
+                    <Link to={inicioDe(usuario)} className="menu-cuenta__accion">
+                      <UserRound size={18} aria-hidden="true" />
+                      Mi cuenta
+                    </Link>
+                  )}
+
+                  <button type="button" className="menu-cuenta__accion" onClick={salir}>
+                    <LogOut size={18} aria-hidden="true" />
+                    Cerrar sesión
+                  </button>
+                </div>
               </>
             ) : (
               <>
@@ -112,15 +131,7 @@ export default function Encabezado() {
           </div>
         </nav>
 
-        <button
-          type="button"
-          className="encabezado__tema"
-          aria-label={etiquetaTema}
-          title={etiquetaTema}
-          onClick={alternarTema}
-        >
-          <IconoTema size={20} aria-hidden="true" />
-        </button>
+        <AjustesApariencia />
       </div>
     </header>
   )

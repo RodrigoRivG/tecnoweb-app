@@ -33,7 +33,7 @@ h3 {
 }
 
 h1 {
-  font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+  font-size: clamp(1.9rem, calc(4.5vw * var(--escala-texto)), 2.75rem);
   letter-spacing: -0.02em;
 }
 
@@ -92,5 +92,5 @@ a:hover {
 }
 
 .titulo-pagina {
-  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-size: clamp(1.6rem, calc(4vw * var(--escala-texto)), 2.1rem);
 }
