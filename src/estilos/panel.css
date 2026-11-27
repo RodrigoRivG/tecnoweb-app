@@ -145,6 +145,126 @@
   flex-wrap: wrap;
 }
 
+.estadisticas,
+.estadisticas__bloque {
+  display: grid;
+  gap: 1rem;
+}
+
+.estadisticas__bloque {
+  min-width: 0;
+  align-content: start;
+}
+
+.estadisticas__periodo {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.estadisticas__indicadores,
+.estadisticas__resumen {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.estadisticas__indicadores {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.estadisticas__resumen {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  align-items: start;
+}
+
+.estadisticas__indicador dt {
+  color: var(--texto-suave);
+}
+
+.estadisticas__indicador dd {
+  margin: 0.25rem 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.estadisticas__bloque h2 {
+  margin-bottom: 0;
+}
+
+.estadisticas__barras {
+  display: grid;
+  gap: 1px;
+  height: 9rem;
+  border-bottom: 1px solid var(--borde);
+  background: repeating-linear-gradient(to top, transparent 0 calc(25% - 1px), var(--borde) calc(25% - 1px) 25%);
+}
+
+.estadisticas__dia {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.estadisticas__dia > span {
+  width: 100%;
+  max-width: 2rem;
+  border-radius: var(--radio-chico) var(--radio-chico) 0 0;
+  background: var(--primario);
+}
+
+.estadisticas__eje,
+.estadisticas__pagina {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.estadisticas__eje {
+  margin-top: 0.35rem;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.estadisticas__datos summary {
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.estadisticas__datos .tabla-envoltura {
+  margin-top: 0.75rem;
+}
+
+.estadisticas__paginas {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.estadisticas__pagina span {
+  overflow-wrap: anywhere;
+}
+
+.estadisticas__pista {
+  height: 0.4rem;
+  margin-top: 0.25rem;
+  border-radius: 999px;
+  background: var(--superficie-suave);
+  overflow: hidden;
+}
+
+.estadisticas__pista > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primario);
+}
+
 .tabla__acciones {
   display: inline-flex;
   justify-content: flex-end;

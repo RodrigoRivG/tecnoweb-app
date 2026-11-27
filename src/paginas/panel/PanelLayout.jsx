@@ -1,4 +1,4 @@
-import { Briefcase, Building2, ClipboardList, FileQuestion, FileText, GraduationCap, Landmark, Shield, Users } from 'lucide-react'
+import { Briefcase, Building2, ChartColumn, ClipboardList, FileQuestion, FileText, GraduationCap, Landmark, Shield, Users } from 'lucide-react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { useSesion } from '../../sesion/SesionContext.jsx'
 import { inicioDe, puedeEntrarAlPanel, primeraSeccionPanel, SECCIONES_PANEL, tienePermiso } from '../../utilidades/roles.js'
@@ -13,6 +13,7 @@ const ICONOS = {
   '/panel/usuarios': <Users size={20} aria-hidden="true" />,
   '/panel/roles-permisos': <Shield size={20} aria-hidden="true" />,
   '/panel/bitacora': <ClipboardList size={20} aria-hidden="true" />,
+  '/panel/estadisticas': <ChartColumn size={20} aria-hidden="true" />,
 }
 
 export function InicioPanel() {

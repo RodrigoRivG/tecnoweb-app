@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Link, Route, createRoutesFromElements, matchRoutes, useLocation, useRoutes } from 'react-router'
 import Encabezado from './componentes/Encabezado.jsx'
 import PiePagina from './componentes/PiePagina.jsx'
@@ -21,6 +22,8 @@ import PanelEmpresa from './paginas/PanelEmpresa.jsx'
 import InformeEmpresa from './paginas/InformeEmpresa.jsx'
 import SolicitudesEmpresa from './paginas/panel/SolicitudesEmpresa.jsx'
 import { SesionProvider } from './sesion/SesionContext.jsx'
+
+const Estadisticas = lazy(() => import('./paginas/panel/Estadisticas.jsx'))
 
 function NoEncontrada() {
   return (
@@ -54,6 +57,11 @@ const rutas = createRoutesFromElements(
       <Route path="usuarios" element={<Usuarios />} />
       <Route path="roles-permisos" element={<RolesPermisos />} />
       <Route path="bitacora" element={<Bitacora />} />
+      <Route path="estadisticas" element={
+        <Suspense fallback={<p role="status">Cargando estadísticas…</p>}>
+          <Estadisticas />
+        </Suspense>
+      } />
     </Route>
     <Route path="*" element={<NoEncontrada />} />
   </>,
